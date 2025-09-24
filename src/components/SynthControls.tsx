@@ -4,7 +4,7 @@ const SynthControls = () => {
   const { synthParams, updateSynthParam, selectCharacter } = useSequencer()
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-purple w-64 max-h-[600px] overflow-y-auto">
+    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-purple w-64">
       <h2 className="text-lcars-purple font-bold mb-4">SYNTH CONTROLS</h2>
 
       <div className="space-y-4">
