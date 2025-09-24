@@ -85,6 +85,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const sequencerRef = useRef<Tone.Sequence | null>(null)
   const drumSynthsRef = useRef<{[key: string]: Tone.Synth | Tone.NoiseSynth}>({})
   const drumGainRef = useRef<Tone.Gain | null>(null)
+  const drumEnabledRef = useRef(drumEnabled)
+  const currentDrumPatternRef = useRef(currentDrumPattern)
 
   // Drum patterns database
   const drumPatterns: DrumPattern[] = [
@@ -336,6 +338,15 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     Tone.Transport.bpm.value = tempo
   }, [tempo])
 
+  // Keep drum refs updated
+  useEffect(() => {
+    drumEnabledRef.current = drumEnabled
+  }, [drumEnabled])
+
+  useEffect(() => {
+    currentDrumPatternRef.current = currentDrumPattern
+  }, [currentDrumPattern])
+
   const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
     const newGrid = [...gridRef.current]
     newGrid[row] = [...newGrid[row]]
@@ -414,8 +425,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
 
           // Play drum pattern if enabled
-          if (drumEnabled && drumSynthsRef.current) {
-            const currentPattern = drumPatterns.find(p => p.id === currentDrumPattern)
+          if (drumEnabledRef.current && drumSynthsRef.current) {
+            const currentPattern = drumPatterns.find(p => p.id === currentDrumPatternRef.current)
             if (currentPattern) {
               const drumNames = ['kick', 'snare', 'hihat', 'openhat']
 
