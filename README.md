@@ -1,6 +1,6 @@
 # VibeLoop
 
-## 🎵 **[Try VibeLoop Live →](https://vibeloop.fly.dev/)**
+### 🎵 **Live at: [vibeloop.fly.dev](https://vibeloop.fly.dev/)**
 
 A web-based Tenori-On style audio grid sequencer with LCARS (Star Trek) visual aesthetics, featuring real-time effects and realistic drum machines.
 
