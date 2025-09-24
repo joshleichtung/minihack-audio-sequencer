@@ -1,7 +1,7 @@
 import { useSequencer } from '../context/SequencerContext'
 
 const SynthControls = () => {
-  const { synthParams, updateSynthParam } = useSequencer()
+  const { synthParams, updateSynthParam, selectCharacter } = useSequencer()
 
   return (
     <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-purple w-64 max-h-[600px] overflow-y-auto">
@@ -9,7 +9,10 @@ const SynthControls = () => {
 
       <div className="space-y-4">
         <div>
-          <label className="text-lcars-orange text-sm">BRIGHTNESS</label>
+          <label className="text-lcars-orange text-sm flex justify-between">
+            <span>BRIGHTNESS</span>
+            <span className="text-xs">{synthParams.brightness}</span>
+          </label>
           <input
             type="range"
             min="0"
@@ -21,7 +24,10 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-orange text-sm">TEXTURE</label>
+          <label className="text-lcars-orange text-sm flex justify-between">
+            <span>TEXTURE</span>
+            <span className="text-xs">{synthParams.texture}</span>
+          </label>
           <input
             type="range"
             min="0"
@@ -33,25 +39,46 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-orange text-sm">ATTACK</label>
+          <label className="text-lcars-orange text-sm flex justify-between">
+            <span>ATTACK</span>
+            <span className="text-xs">{synthParams.attack.toFixed(2)}s</span>
+          </label>
           <input
             type="range"
             min="0"
             max="100"
-            value={synthParams.attack * 100}
-            onChange={(e) => updateSynthParam('attack', Number(e.target.value) / 100)}
+            value={synthParams.attack * 50}
+            onChange={(e) => updateSynthParam('attack', Number(e.target.value) / 50)}
             className="w-full"
           />
         </div>
 
         <div>
-          <label className="text-lcars-orange text-sm">RELEASE</label>
+          <label className="text-lcars-orange text-sm flex justify-between">
+            <span>RELEASE</span>
+            <span className="text-xs">{synthParams.release.toFixed(2)}s</span>
+          </label>
           <input
             type="range"
             min="0"
             max="100"
-            value={synthParams.release * 33}
-            onChange={(e) => updateSynthParam('release', Number(e.target.value) / 33)}
+            value={synthParams.release * 50}
+            onChange={(e) => updateSynthParam('release', Number(e.target.value) / 50)}
+            className="w-full"
+          />
+        </div>
+
+        <div>
+          <label className="text-lcars-orange text-sm flex justify-between">
+            <span>VOLUME</span>
+            <span className="text-xs">{synthParams.volume}dB</span>
+          </label>
+          <input
+            type="range"
+            min="-24"
+            max="0"
+            value={synthParams.volume}
+            onChange={(e) => updateSynthParam('volume', Number(e.target.value))}
             className="w-full"
           />
         </div>
@@ -89,7 +116,7 @@ const SynthControls = () => {
             ].map((patch) => (
               <button
                 key={patch.id}
-                onClick={() => updateSynthParam('character', patch.id)}
+                onClick={() => selectCharacter(patch.id)}
                 className={`px-3 py-1 rounded text-xs ${
                   synthParams.character === patch.id
                     ? 'bg-lcars-purple text-black'

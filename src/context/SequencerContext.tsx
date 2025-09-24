@@ -12,7 +12,7 @@ interface SequencerContextType {
   isPlaying: boolean
   tempo: number
   currentStep: number
-  toggleCell: (row: number, col: number) => void
+  toggleCell: (row: number, col: number, shiftKey?: boolean) => void
   togglePlayback: () => void
   setTempo: (tempo: number) => void
   clearGrid: () => void
@@ -27,6 +27,7 @@ interface SequencerContextType {
     character: string
   }
   updateSynthParam: (param: string, value: number | string) => void
+  selectCharacter: (character: string) => void
 }
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -87,68 +88,93 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [])
 
-  // Character patch definitions
+  // Character patch definitions - simplified to use our controls
   const characterPatches: Record<string, any> = {
-    default: {
-      oscillator: { type: synthParams.waveform },
-      envelope: { attack: synthParams.attack, release: synthParams.release },
-      filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.3 }
-    },
+    default: null, // Uses current slider values
     nebula: {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.8, decay: 0.3, sustain: 0.7, release: 2.0 },
-      filterEnvelope: { attack: 0.5, decay: 0.2, sustain: 0.3, release: 1.5 }
+      waveform: 'sine',
+      attack: 0.5,
+      release: 1.5,
+      brightness: 30,
+      texture: 40,
+      volume: -8
     },
     plasma: {
-      oscillator: { type: 'sawtooth' },
-      envelope: { attack: 0.001, decay: 0.1, sustain: 0.3, release: 0.2 },
-      filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
+      waveform: 'sawtooth',
+      attack: 0.001,
+      release: 0.3,
+      brightness: 80,
+      texture: 60,
+      volume: -10
     },
     quantum: {
-      oscillator: { type: 'square' },
-      envelope: { attack: 0.001, decay: 0.01, sustain: 0.1, release: 0.05 },
-      filterEnvelope: { attack: 0.001, decay: 0.01, sustain: 0.1, release: 0.01 }
+      waveform: 'square',
+      attack: 0.001,
+      release: 0.1,
+      brightness: 70,
+      texture: 30,
+      volume: -8
     },
     warpDrive: {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.5 },
-      filterEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.6, release: 0.4 }
+      waveform: 'triangle',
+      attack: 0.05,
+      release: 0.5,
+      brightness: 40,
+      texture: 50,
+      volume: -6
     },
     photon: {
-      oscillator: { type: 'pulse' as any },
-      envelope: { attack: 0.001, decay: 0.001, sustain: 0.01, release: 0.1 },
-      filterEnvelope: { attack: 0.001, decay: 0.01, sustain: 0.0, release: 0.05 }
+      waveform: 'square',
+      attack: 0.001,
+      release: 0.05,
+      brightness: 90,
+      texture: 10,
+      volume: -4
     },
     void: {
-      oscillator: { type: 'fatsawtooth' as any },
-      envelope: { attack: 0.3, decay: 0.5, sustain: 0.9, release: 1.5 },
-      filterEnvelope: { attack: 0.4, decay: 0.3, sustain: 0.7, release: 1.0 }
+      waveform: 'sawtooth',
+      attack: 0.2,
+      release: 1.0,
+      brightness: 20,
+      texture: 70,
+      volume: -5
     }
   }
+
+  // Handle character patch selection
+  const selectCharacter = useCallback((character: string) => {
+    if (character !== 'default') {
+      const patch = characterPatches[character]
+      if (patch) {
+        setSynthParams(prev => ({
+          ...prev,
+          ...patch,
+          character
+        }))
+      }
+    } else {
+      setSynthParams(prev => ({
+        ...prev,
+        character
+      }))
+    }
+  }, [])
 
   // Update synth parameters
   useEffect(() => {
     if (synthRef.current) {
-      const patch = characterPatches[synthParams.character] || characterPatches.default
-
-      // Apply character patch
       synthRef.current.set({
-        ...patch,
+        oscillator: { type: synthParams.waveform as any },
+        envelope: {
+          attack: synthParams.attack,
+          decay: 0.1,
+          sustain: 0.5,
+          release: synthParams.release
+        },
         volume: synthParams.volume
       })
-
-      // Override with manual controls if using default
-      if (synthParams.character === 'default') {
-        synthRef.current.set({
-          oscillator: { type: synthParams.waveform as any },
-          envelope: {
-            attack: synthParams.attack,
-            release: synthParams.release
-          }
-        })
-      }
     }
-  }, [synthParams])
+  }, [synthParams.waveform, synthParams.attack, synthParams.release, synthParams.volume])
 
   // Update tempo
   useEffect(() => {
@@ -327,7 +353,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         clearGrid,
         setPreset,
         synthParams,
-        updateSynthParam
+        updateSynthParam,
+        selectCharacter
       }}
     >
       {children}
