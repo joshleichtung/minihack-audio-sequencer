@@ -1,6 +1,8 @@
+### 🎵 **Live at: [vibeloop.fly.dev](https://vibeloop.fly.dev/)**
+
 # VibeLoop
 
-### 🎵 **Live at: [vibeloop.fly.dev](https://vibeloop.fly.dev/)**
+![VibeLoop Demo](https://github.com/joshleichtung/minihack-audio-sequencer/raw/main/vibeloop-demo.gif)
 
 A web-based Tenori-On style audio grid sequencer with LCARS (Star Trek) visual aesthetics, featuring real-time effects and realistic drum machines.
 
