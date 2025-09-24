@@ -1,4 +1,4 @@
-import { Sparkles, Zap, TrendingDown, TrendingUp, Music, Shuffle } from 'lucide-react'
+import { Sparkles, Zap, TrendingDown, TrendingUp } from 'lucide-react'
 import { useSequencer } from '../context/SequencerContext'
 
 const PresetButtons = () => {

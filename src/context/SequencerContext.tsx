@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
-import { Scale, Chord } from 'tonal'
 
 interface Cell {
   active: boolean

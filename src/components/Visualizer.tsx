@@ -17,7 +17,6 @@ const Visualizer = ({ side }: VisualizerProps) => {
 
       // Create different patterns for left and right
       const offset = side === 'left' ? 0 : Math.PI
-      const frequency = side === 'left' ? 0.5 : 0.7
 
       // Animate based on current step and synth params
       const stepInfluence = Math.sin((currentStep + i) * 0.3 + offset) * 0.5 + 0.5
@@ -30,7 +29,7 @@ const Visualizer = ({ side }: VisualizerProps) => {
     setBars(newBars)
   }, [currentStep, isPlaying, side, synthParams.brightness, synthParams.texture])
 
-  const getBarColor = (height: number, index: number) => {
+  const getBarColor = (height: number) => {
     if (height < 20) return 'bg-gray-800'
     if (height < 40) return 'bg-lcars-blue'
     if (height < 70) return 'bg-lcars-purple'
@@ -44,7 +43,7 @@ const Visualizer = ({ side }: VisualizerProps) => {
           key={index}
           className={`
             w-full transition-all duration-150 rounded-sm
-            ${getBarColor(height, index)}
+            ${getBarColor(height)}
             ${isPlaying ? 'animate-pulse' : ''}
           `}
           style={{
