@@ -34,7 +34,7 @@ const AppContent = () => {
         {/* Top Bar */}
         <div className="flex gap-2 mb-4">
           <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-16 flex-1 flex items-center px-8">
-            <h1 className="text-black text-2xl font-bold tracking-wider">MINIHACK SEQUENCER</h1>
+            <h1 className="text-black text-2xl font-bold tracking-wider">VIBELOOP</h1>
           </div>
           <div className="bg-lcars-purple rounded-lg w-32 h-16" />
           <div className="bg-lcars-blue rounded-lg w-24 h-16" />

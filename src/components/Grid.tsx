@@ -45,8 +45,8 @@ const Grid = () => {
   }
 
   return (
-    <div className="bg-gray-900 p-4 rounded-lg border-2 border-lcars-blue">
-      <div className="grid grid-cols-16 gap-1">
+    <div className="bg-gray-900 p-4 rounded-lg border-2 border-lcars-blue w-fit mx-auto">
+      <div className="grid grid-cols-16 gap-1 aspect-square">
         {grid.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
             const squareKey = `${rowIndex}-${colIndex}`
@@ -57,7 +57,7 @@ const Grid = () => {
                 key={squareKey}
                 onClick={(e) => toggleCell(rowIndex, colIndex, e.shiftKey)}
                 className={`
-                  w-8 h-8 rounded-sm transition-all duration-150 relative overflow-hidden
+                  w-14 h-14 rounded-sm transition-all duration-150 relative overflow-hidden
                   ${getVelocityColor(cell)}
                   ${colIndex === currentStep
                     ? 'ring-2 ring-lcars-yellow'
