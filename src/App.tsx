@@ -43,12 +43,9 @@ const AppContent = () => {
         {/* Main Content */}
         <div className="flex gap-4">
           {/* Left Panel */}
-          <div className="flex flex-col gap-4 w-auto">
-            <div className="bg-lcars-peach rounded-t-lg rounded-b-3xl w-20 h-32" />
-            <div className="flex gap-4">
-              <EffectsControls />
-              <SynthControls />
-            </div>
+          <div className="flex gap-4 w-auto">
+            <EffectsControls />
+            <SynthControls />
           </div>
 
           {/* Left Visualizer */}
