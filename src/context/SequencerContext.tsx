@@ -11,7 +11,7 @@ interface DrumPattern {
   id: string
   name: string
   genre: string
-  pattern: boolean[][]  // [kick, snare, hihat, openhat] x 16 steps
+  pattern: number[][]  // [kick, snare, hihat, openhat] x 16 steps (0 or 1)
   kit: string
 }
 
@@ -279,7 +279,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // HIHAT - Bright metallic closed hihat
     const hihatFilter = new Tone.Filter(10000, 'highpass').connect(drumGainRef.current)
     const hihatSynth = new Tone.MetalSynth({
-      frequency: 400,
       envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.01 },
       harmonicity: 12,
       modulationIndex: 32,
@@ -290,7 +289,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // OPEN HIHAT - Longer decay metallic sound
     const openhatFilter = new Tone.Filter(8000, 'highpass').connect(drumGainRef.current)
     const openhatSynth = new Tone.MetalSynth({
-      frequency: 400,
       envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 0.3 },
       harmonicity: 10,
       modulationIndex: 16,
@@ -301,13 +299,13 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     drumSynthsRef.current = {
       kick: kickSynth,
       snare: {
-        triggerAttackRelease: (note: any, duration: any) => {
+        triggerAttackRelease: (duration: any) => {
           snareNoise.triggerAttackRelease(duration)
           snareTone.triggerAttackRelease(200, duration)
         }
-      },
-      hihat: hihatSynth,
-      openhat: openhatSynth
+      } as any,
+      hihat: hihatSynth as any,
+      openhat: openhatSynth as any
     }
 
     return () => {
