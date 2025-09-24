@@ -84,6 +84,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const sequencerRef = useRef<Tone.Sequence | null>(null)
   const drumSynthsRef = useRef<{[key: string]: Tone.Synth | Tone.NoiseSynth}>({})
+  const drumGainRef = useRef<Tone.Gain | null>(null)
 
   // Drum patterns database
   const drumPatterns: DrumPattern[] = [
@@ -202,26 +203,27 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     })
 
-    // Initialize drum synthesizers
-    const gainNode = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
+    // Initialize drum gain node
+    drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
 
+    // Initialize drum synthesizers
     drumSynthsRef.current = {
       kick: new Tone.Synth({
         oscillator: { type: 'sine' },
         envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
-      }).connect(gainNode),
+      }).connect(drumGainRef.current),
       snare: new Tone.NoiseSynth({
         noise: { type: 'white' },
         envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 }
-      }).connect(gainNode),
+      }).connect(drumGainRef.current),
       hihat: new Tone.NoiseSynth({
         noise: { type: 'white' },
         envelope: { attack: 0.01, decay: 0.05, sustain: 0, release: 0.05 }
-      }).connect(gainNode),
+      }).connect(drumGainRef.current),
       openhat: new Tone.NoiseSynth({
         noise: { type: 'white' },
         envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
-      }).connect(gainNode)
+      }).connect(drumGainRef.current)
     }
 
     // Set initial frequencies for kick drum
@@ -235,7 +237,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         synthRef.current.dispose()
       }
       Object.values(drumSynthsRef.current).forEach(synth => synth.dispose())
-      gainNode.dispose()
+      if (drumGainRef.current) {
+        drumGainRef.current.dispose()
+      }
     }
   }, [])
 
@@ -515,14 +519,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const setDrumVolumeCallback = useCallback((volume: number) => {
     setDrumVolume(volume)
 
-    // Update drum synth volumes in real-time
-    if (drumSynthsRef.current) {
-      const gainValue = Tone.dbToGain(volume)
-      Object.values(drumSynthsRef.current).forEach(synth => {
-        if (synth.volume) {
-          synth.volume.value = volume
-        }
-      })
+    // Update drum gain node in real-time
+    if (drumGainRef.current) {
+      drumGainRef.current.gain.value = Tone.dbToGain(volume)
     }
   }, [])
 
