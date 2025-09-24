@@ -23,6 +23,7 @@ interface SequencerContextType {
     attack: number
     release: number
     volume: number
+    waveform: string
     character: string
   }
   updateSynthParam: (param: string, value: number | string) => void
@@ -56,7 +57,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     attack: 0.01,    // Envelope attack
     release: 0.3,    // Envelope release
     volume: -12,     // Master volume in dB
-    character: 'sawtooth' // Oscillator type
+    waveform: 'sawtooth', // Oscillator type
+    character: 'default' // Synth patch
   })
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
@@ -85,17 +87,66 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [])
 
+  // Character patch definitions
+  const characterPatches: Record<string, any> = {
+    default: {
+      oscillator: { type: synthParams.waveform },
+      envelope: { attack: synthParams.attack, release: synthParams.release },
+      filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.3 }
+    },
+    nebula: {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.8, decay: 0.3, sustain: 0.7, release: 2.0 },
+      filterEnvelope: { attack: 0.5, decay: 0.2, sustain: 0.3, release: 1.5 }
+    },
+    plasma: {
+      oscillator: { type: 'sawtooth' },
+      envelope: { attack: 0.001, decay: 0.1, sustain: 0.3, release: 0.2 },
+      filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
+    },
+    quantum: {
+      oscillator: { type: 'square' },
+      envelope: { attack: 0.001, decay: 0.01, sustain: 0.1, release: 0.05 },
+      filterEnvelope: { attack: 0.001, decay: 0.01, sustain: 0.1, release: 0.01 }
+    },
+    warpDrive: {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.5 },
+      filterEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.6, release: 0.4 }
+    },
+    photon: {
+      oscillator: { type: 'pulse' as any },
+      envelope: { attack: 0.001, decay: 0.001, sustain: 0.01, release: 0.1 },
+      filterEnvelope: { attack: 0.001, decay: 0.01, sustain: 0.0, release: 0.05 }
+    },
+    void: {
+      oscillator: { type: 'fatsawtooth' as any },
+      envelope: { attack: 0.3, decay: 0.5, sustain: 0.9, release: 1.5 },
+      filterEnvelope: { attack: 0.4, decay: 0.3, sustain: 0.7, release: 1.0 }
+    }
+  }
+
   // Update synth parameters
   useEffect(() => {
     if (synthRef.current) {
+      const patch = characterPatches[synthParams.character] || characterPatches.default
+
+      // Apply character patch
       synthRef.current.set({
-        oscillator: { type: synthParams.character as any },
-        envelope: {
-          attack: synthParams.attack,
-          release: synthParams.release
-        },
+        ...patch,
         volume: synthParams.volume
       })
+
+      // Override with manual controls if using default
+      if (synthParams.character === 'default') {
+        synthRef.current.set({
+          oscillator: { type: synthParams.waveform as any },
+          envelope: {
+            attack: synthParams.attack,
+            release: synthParams.release
+          }
+        })
+      }
     }
   }, [synthParams])
 
@@ -217,7 +268,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           ...prev,
           attack: 0.5,
           release: 2,
-          character: 'sine'
+          waveform: 'sine'
         }))
         break
 
@@ -233,7 +284,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           ...prev,
           attack: 0.001,
           release: 0.1,
-          character: 'square'
+          waveform: 'square'
         }))
         break
 

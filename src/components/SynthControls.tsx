@@ -4,7 +4,7 @@ const SynthControls = () => {
   const { synthParams, updateSynthParam } = useSequencer()
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-purple w-64">
+    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-purple w-64 max-h-[600px] overflow-y-auto">
       <h2 className="text-lcars-purple font-bold mb-4">SYNTH CONTROLS</h2>
 
       <div className="space-y-4">
@@ -57,19 +57,46 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-orange text-sm">CHARACTER</label>
+          <label className="text-lcars-orange text-sm">WAVEFORM</label>
           <div className="grid grid-cols-2 gap-2 mt-1">
             {['sine', 'sawtooth', 'square', 'triangle'].map((type) => (
               <button
                 key={type}
-                onClick={() => updateSynthParam('character', type)}
+                onClick={() => updateSynthParam('waveform', type)}
                 className={`px-3 py-1 rounded text-xs ${
-                  synthParams.character === type
+                  synthParams.waveform === type
                     ? 'bg-lcars-orange text-black'
                     : 'bg-gray-700 text-white hover:bg-gray-600'
                 }`}
               >
                 {type.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-lcars-purple text-sm">CHARACTER</label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            {[
+              { id: 'default', name: 'DEFAULT' },
+              { id: 'nebula', name: 'NEBULA' },
+              { id: 'plasma', name: 'PLASMA' },
+              { id: 'quantum', name: 'QUANTUM' },
+              { id: 'warpDrive', name: 'WARP' },
+              { id: 'photon', name: 'PHOTON' },
+              { id: 'void', name: 'VOID' }
+            ].map((patch) => (
+              <button
+                key={patch.id}
+                onClick={() => updateSynthParam('character', patch.id)}
+                className={`px-3 py-1 rounded text-xs ${
+                  synthParams.character === patch.id
+                    ? 'bg-lcars-purple text-black'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
+              >
+                {patch.name}
               </button>
             ))}
           </div>
