@@ -30,7 +30,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-black p-4">
       {/* LCARS Frame */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-none mx-auto px-4">
         {/* Top Bar */}
         <div className="flex gap-2 mb-4">
           <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-16 flex-1 flex items-center px-8">
@@ -43,10 +43,12 @@ const AppContent = () => {
         {/* Main Content */}
         <div className="flex gap-4">
           {/* Left Panel */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-auto">
             <div className="bg-lcars-peach rounded-t-lg rounded-b-3xl w-20 h-32" />
-            <SynthControls />
-            <EffectsControls />
+            <div className="flex gap-4">
+              <EffectsControls />
+              <SynthControls />
+            </div>
           </div>
 
           {/* Left Visualizer */}
@@ -55,7 +57,7 @@ const AppContent = () => {
           </div>
 
           {/* Center - Grid */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Grid />
           </div>
 
@@ -65,7 +67,7 @@ const AppContent = () => {
           </div>
 
           {/* Right Panel */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-auto">
             <PresetButtons />
             <DrumControls />
             <div className="bg-lcars-pink rounded-t-3xl rounded-b-lg w-20 h-32" />
