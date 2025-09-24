@@ -251,28 +251,64 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Initialize drum gain node
     drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
 
-    // Initialize drum synthesizers
-    drumSynthsRef.current = {
-      kick: new Tone.Synth({
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
-      }).connect(drumGainRef.current),
-      snare: new Tone.NoiseSynth({
-        noise: { type: 'white' },
-        envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 }
-      }).connect(drumGainRef.current),
-      hihat: new Tone.NoiseSynth({
-        noise: { type: 'white' },
-        envelope: { attack: 0.01, decay: 0.05, sustain: 0, release: 0.05 }
-      }).connect(drumGainRef.current),
-      openhat: new Tone.NoiseSynth({
-        noise: { type: 'white' },
-        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
-      }).connect(drumGainRef.current)
-    }
+    // Initialize drum synthesizers with distinct sounds
 
-    // Set initial frequencies for kick drum
-    drumSynthsRef.current.kick.oscillator.frequency.value = 60
+    // KICK DRUM - Deep punchy kick with pitch envelope
+    const kickLowpass = new Tone.Filter(100, 'lowpass').connect(drumGainRef.current)
+    const kickSynth = new Tone.MembraneSynth({
+      pitchDecay: 0.08,
+      octaves: 2,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 }
+    }).connect(kickLowpass)
+
+    // SNARE DRUM - Layered noise + tone for realistic snare
+    const snareNoise = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.01, decay: 0.13, sustain: 0, release: 0.03 }
+    })
+    const snareTone = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.02 }
+    })
+    const snareFilter = new Tone.Filter(3000, 'highpass').connect(drumGainRef.current)
+    const snareMix = new Tone.Gain(0.7).connect(snareFilter)
+    snareNoise.connect(snareMix)
+    snareTone.connect(snareMix)
+
+    // HIHAT - Bright metallic closed hihat
+    const hihatFilter = new Tone.Filter(10000, 'highpass').connect(drumGainRef.current)
+    const hihatSynth = new Tone.MetalSynth({
+      frequency: 400,
+      envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.01 },
+      harmonicity: 12,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1
+    }).connect(hihatFilter)
+
+    // OPEN HIHAT - Longer decay metallic sound
+    const openhatFilter = new Tone.Filter(8000, 'highpass').connect(drumGainRef.current)
+    const openhatSynth = new Tone.MetalSynth({
+      frequency: 400,
+      envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 0.3 },
+      harmonicity: 10,
+      modulationIndex: 16,
+      resonance: 3000,
+      octaves: 1.5
+    }).connect(openhatFilter)
+
+    drumSynthsRef.current = {
+      kick: kickSynth,
+      snare: {
+        triggerAttackRelease: (note: any, duration: any) => {
+          snareNoise.triggerAttackRelease(duration)
+          snareTone.triggerAttackRelease(200, duration)
+        }
+      },
+      hihat: hihatSynth,
+      openhat: openhatSynth
+    }
 
     return () => {
       if (sequencerRef.current) {
@@ -281,7 +317,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (synthRef.current) {
         synthRef.current.dispose()
       }
-      Object.values(drumSynthsRef.current).forEach(synth => synth.dispose())
+      // Dispose drum synthesizers carefully
+      if (drumSynthsRef.current.kick) drumSynthsRef.current.kick.dispose()
+      if (drumSynthsRef.current.hihat) drumSynthsRef.current.hihat.dispose()
+      if (drumSynthsRef.current.openhat) drumSynthsRef.current.openhat.dispose()
+      // Snare cleanup handled by individual components
       if (drumGainRef.current) {
         drumGainRef.current.dispose()
       }
