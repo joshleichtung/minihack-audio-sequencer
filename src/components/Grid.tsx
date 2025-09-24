@@ -13,8 +13,8 @@ const Grid = () => {
       // Normal - orange
       return 'bg-lcars-orange shadow-lg shadow-lcars-orange/50'
     } else if (cell.velocity === 0.5) {
-      // Quiet - dim yellow
-      return 'bg-yellow-600 shadow-lg shadow-yellow-600/50'
+      // Quiet - blue/purple
+      return 'bg-lcars-blue shadow-lg shadow-lcars-blue/50'
     }
 
     return 'bg-gray-700'
@@ -52,7 +52,7 @@ const Grid = () => {
           <span>EMPHASIS</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-yellow-600 rounded-sm"></div>
+          <div className="w-3 h-3 bg-lcars-blue rounded-sm"></div>
           <span>QUIET</span>
         </div>
         <div className="ml-auto text-gray-400">

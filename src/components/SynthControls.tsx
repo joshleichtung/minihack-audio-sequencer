@@ -9,7 +9,7 @@ const SynthControls = () => {
 
       <div className="space-y-4">
         <div>
-          <label className="text-lcars-blue text-sm">BRIGHTNESS</label>
+          <label className="text-lcars-orange text-sm">BRIGHTNESS</label>
           <input
             type="range"
             min="0"
@@ -21,7 +21,7 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-blue text-sm">TEXTURE</label>
+          <label className="text-lcars-orange text-sm">TEXTURE</label>
           <input
             type="range"
             min="0"
@@ -33,7 +33,7 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-blue text-sm">ATTACK</label>
+          <label className="text-lcars-orange text-sm">ATTACK</label>
           <input
             type="range"
             min="0"
@@ -45,7 +45,7 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-blue text-sm">RELEASE</label>
+          <label className="text-lcars-orange text-sm">RELEASE</label>
           <input
             type="range"
             min="0"
@@ -57,7 +57,7 @@ const SynthControls = () => {
         </div>
 
         <div>
-          <label className="text-lcars-blue text-sm">CHARACTER</label>
+          <label className="text-lcars-orange text-sm">CHARACTER</label>
           <div className="grid grid-cols-2 gap-2 mt-1">
             {['sine', 'sawtooth', 'square', 'triangle'].map((type) => (
               <button

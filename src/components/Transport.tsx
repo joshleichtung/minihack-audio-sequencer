@@ -23,7 +23,7 @@ const Transport = () => {
       </button>
 
       <div className="flex items-center gap-2 ml-auto">
-        <label className="text-lcars-blue font-bold">TEMPO</label>
+        <label className="text-white font-bold">TEMPO</label>
         <input
           type="range"
           min="60"
