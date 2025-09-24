@@ -2,6 +2,7 @@ import Grid from './components/Grid'
 import Transport from './components/Transport'
 import SynthControls from './components/SynthControls'
 import PresetButtons from './components/PresetButtons'
+import Visualizer from './components/Visualizer'
 import { SequencerProvider } from './context/SequencerContext'
 
 function App() {
@@ -27,9 +28,19 @@ function App() {
               <SynthControls />
             </div>
 
+            {/* Left Visualizer */}
+            <div className="flex items-center">
+              <Visualizer side="left" />
+            </div>
+
             {/* Center - Grid */}
             <div className="flex-1">
               <Grid />
+            </div>
+
+            {/* Right Visualizer */}
+            <div className="flex items-center">
+              <Visualizer side="right" />
             </div>
 
             {/* Right Panel */}

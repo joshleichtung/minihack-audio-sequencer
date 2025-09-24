@@ -1,7 +1,31 @@
 import { useSequencer } from '../context/SequencerContext'
+import { useEffect, useState } from 'react'
 
 const Grid = () => {
   const { grid, toggleCell, currentStep } = useSequencer()
+  const [sparkleSquares, setSparkleSquares] = useState<Set<string>>(new Set())
+
+  // Trigger sparkle animation for active squares when step changes
+  useEffect(() => {
+    if (currentStep !== undefined) {
+      const activeSquares = new Set<string>()
+      grid.forEach((row, rowIndex) => {
+        if (row[currentStep]?.active) {
+          activeSquares.add(`${rowIndex}-${currentStep}`)
+        }
+      })
+
+      setSparkleSquares(activeSquares)
+
+      // Clear sparkles after animation
+      if (activeSquares.size > 0) {
+        const timeout = setTimeout(() => {
+          setSparkleSquares(new Set())
+        }, 200)
+        return () => clearTimeout(timeout)
+      }
+    }
+  }, [currentStep, grid])
 
   const getVelocityColor = (cell: { active: boolean; velocity: number }) => {
     if (!cell.active) return 'bg-gray-700 hover:bg-gray-600'
@@ -24,20 +48,33 @@ const Grid = () => {
     <div className="bg-gray-900 p-4 rounded-lg border-2 border-lcars-blue">
       <div className="grid grid-cols-16 gap-1">
         {grid.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <button
-              key={`${rowIndex}-${colIndex}`}
-              onClick={(e) => toggleCell(rowIndex, colIndex, e.shiftKey)}
-              className={`
-                w-8 h-8 rounded-sm transition-all duration-150
-                ${getVelocityColor(cell)}
-                ${colIndex === currentStep
-                  ? 'ring-2 ring-lcars-yellow'
-                  : ''
-                }
-              `}
-            />
-          ))
+          row.map((cell, colIndex) => {
+            const squareKey = `${rowIndex}-${colIndex}`
+            const isSparkle = sparkleSquares.has(squareKey)
+
+            return (
+              <button
+                key={squareKey}
+                onClick={(e) => toggleCell(rowIndex, colIndex, e.shiftKey)}
+                className={`
+                  w-8 h-8 rounded-sm transition-all duration-150 relative overflow-hidden
+                  ${getVelocityColor(cell)}
+                  ${colIndex === currentStep
+                    ? 'ring-2 ring-lcars-yellow'
+                    : ''
+                  }
+                  ${isSparkle ? 'animate-pulse' : ''}
+                `}
+              >
+                {isSparkle && (
+                  <div className="absolute inset-0 bg-white opacity-50 animate-ping rounded-sm"></div>
+                )}
+                {isSparkle && (
+                  <div className="absolute inset-0 bg-lcars-yellow opacity-30 animate-bounce rounded-sm"></div>
+                )}
+              </button>
+            )
+          })
         )}
       </div>
 
