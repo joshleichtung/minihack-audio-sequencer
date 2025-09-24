@@ -21,6 +21,9 @@ export default {
       fontFamily: {
         'lcars': ['Helvetica Neue', 'Arial Narrow', 'sans-serif'],
       },
+      gridTemplateColumns: {
+        '16': 'repeat(16, minmax(0, 1fr))',
+      }
     },
   },
   plugins: [],
