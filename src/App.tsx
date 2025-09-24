@@ -3,6 +3,7 @@ import Grid from './components/Grid'
 import Transport from './components/Transport'
 import SynthControls from './components/SynthControls'
 import PresetButtons from './components/PresetButtons'
+import DrumControls from './components/DrumControls'
 import Visualizer from './components/Visualizer'
 import { SequencerProvider, useSequencer } from './context/SequencerContext'
 
@@ -64,6 +65,7 @@ const AppContent = () => {
           {/* Right Panel */}
           <div className="flex flex-col gap-4">
             <PresetButtons />
+            <DrumControls />
             <div className="bg-lcars-pink rounded-t-3xl rounded-b-lg w-20 h-32" />
           </div>
         </div>

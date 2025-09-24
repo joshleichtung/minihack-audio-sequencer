@@ -7,6 +7,14 @@ interface Cell {
   velocity: number
 }
 
+interface DrumPattern {
+  id: string
+  name: string
+  genre: string
+  pattern: boolean[][]  // [kick, snare, hihat, openhat] x 16 steps
+  kit: string
+}
+
 interface SequencerContextType {
   grid: Cell[][]
   isPlaying: boolean
@@ -28,6 +36,13 @@ interface SequencerContextType {
   }
   updateSynthParam: (param: string, value: number | string) => void
   selectCharacter: (character: string) => void
+  drumEnabled: boolean
+  drumVolume: number
+  currentDrumPattern: string
+  drumPatterns: DrumPattern[]
+  toggleDrums: () => void
+  setDrumVolume: (volume: number) => void
+  selectDrumPattern: (patternId: string) => void
 }
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -62,8 +77,117 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     character: 'default' // Synth patch
   })
 
+  const [drumEnabled, setDrumEnabled] = useState(false)
+  const [drumVolume, setDrumVolume] = useState(-6) // dB
+  const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
+
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const sequencerRef = useRef<Tone.Sequence | null>(null)
+  const drumSynthsRef = useRef<{[key: string]: Tone.Synth | Tone.NoiseSynth}>({})
+
+  // Drum patterns database
+  const drumPatterns: DrumPattern[] = [
+    // Hip Hop
+    { id: 'hiphop1', name: 'BOOM BAP', genre: 'Hip Hop', kit: 'classic', pattern: [
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    { id: 'hiphop2', name: 'TRAP', genre: 'Hip Hop', kit: 'modern', pattern: [
+      [1,0,0,1,0,0,1,0,1,0,0,1,0,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0], // snare
+      [1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'hiphop3', name: 'DRILL', genre: 'Hip Hop', kit: 'hard', pattern: [
+      [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'hiphop4', name: 'LOFI', genre: 'Hip Hop', kit: 'vintage', pattern: [
+      [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    // Jazz
+    { id: 'jazz1', name: 'SWING', genre: 'Jazz', kit: 'jazz', pattern: [
+      [1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0], // kick
+      [0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0], // snare
+      [1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0], // hihat
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]  // openhat
+    ]},
+    { id: 'jazz2', name: 'BEBOP', genre: 'Jazz', kit: 'vintage', pattern: [
+      [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0], // kick
+      [0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0], // snare
+      [1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1], // hihat
+      [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0]  // openhat
+    ]},
+    { id: 'jazz3', name: 'LATIN', genre: 'Jazz', kit: 'latin', pattern: [
+      [1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0], // kick
+      [0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], // snare
+      [1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'jazz4', name: 'FUSION', genre: 'Jazz', kit: 'modern', pattern: [
+      [1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,1], // kick
+      [0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0], // snare
+      [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    // Drum & Bass
+    { id: 'dnb1', name: 'AMEN', genre: 'D&B', kit: 'electronic', pattern: [
+      [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0], // kick
+      [0,0,1,0,1,0,0,1,0,1,0,0,1,0,0,1], // snare
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'dnb2', name: 'NEUROFUNK', genre: 'D&B', kit: 'dark', pattern: [
+      [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0], // hihat
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    { id: 'dnb3', name: 'LIQUID', genre: 'D&B', kit: 'smooth', pattern: [
+      [1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    { id: 'dnb4', name: 'JUNGLE', genre: 'D&B', kit: 'classic', pattern: [
+      [1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1], // kick
+      [0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0], // snare
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    // Additional styles
+    { id: 'house1', name: 'FOUR-ON-FLOOR', genre: 'House', kit: 'electronic', pattern: [
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
+      [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
+    ]},
+    { id: 'breakbeat1', name: 'FUNKY BREAKS', genre: 'Breaks', kit: 'funk', pattern: [
+      [1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], // kick
+      [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0], // snare
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'rock1', name: 'ROCK STEADY', genre: 'Rock', kit: 'rock', pattern: [
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], // snare
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
+    ]},
+    { id: 'afrobeat1', name: 'AFROBEAT', genre: 'World', kit: 'world', pattern: [
+      [1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,0], // kick
+      [0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], // snare
+      [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0], // hihat
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]  // openhat
+    ]}
+  ]
 
   // Initialize Tone.js
   useEffect(() => {
@@ -78,6 +202,31 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     })
 
+    // Initialize drum synthesizers
+    const gainNode = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
+
+    drumSynthsRef.current = {
+      kick: new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+      }).connect(gainNode),
+      snare: new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 }
+      }).connect(gainNode),
+      hihat: new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.01, decay: 0.05, sustain: 0, release: 0.05 }
+      }).connect(gainNode),
+      openhat: new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+      }).connect(gainNode)
+    }
+
+    // Set initial frequencies for kick drum
+    drumSynthsRef.current.kick.oscillator.frequency.value = 60
+
     return () => {
       if (sequencerRef.current) {
         sequencerRef.current.dispose()
@@ -85,6 +234,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (synthRef.current) {
         synthRef.current.dispose()
       }
+      Object.values(drumSynthsRef.current).forEach(synth => synth.dispose())
+      gainNode.dispose()
     }
   }, [])
 
@@ -257,6 +408,23 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               }
             }
           }
+
+          // Play drum pattern if enabled
+          if (drumEnabled && drumSynthsRef.current) {
+            const currentPattern = drumPatterns.find(p => p.id === currentDrumPattern)
+            if (currentPattern) {
+              const drumNames = ['kick', 'snare', 'hihat', 'openhat']
+
+              drumNames.forEach((drumName, drumIndex) => {
+                if (currentPattern.pattern[drumIndex][step] === 1) {
+                  const synth = drumSynthsRef.current[drumName]
+                  if (synth) {
+                    synth.triggerAttackRelease('16n', time)
+                  }
+                }
+              })
+            }
+          }
         },
         Array(16).fill(0).map((_, i) => i),
         '16n'
@@ -340,6 +508,28 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }))
   }, [])
 
+  const toggleDrums = useCallback(() => {
+    setDrumEnabled(prev => !prev)
+  }, [])
+
+  const setDrumVolumeCallback = useCallback((volume: number) => {
+    setDrumVolume(volume)
+
+    // Update drum synth volumes in real-time
+    if (drumSynthsRef.current) {
+      const gainValue = Tone.dbToGain(volume)
+      Object.values(drumSynthsRef.current).forEach(synth => {
+        if (synth.volume) {
+          synth.volume.value = volume
+        }
+      })
+    }
+  }, [])
+
+  const selectDrumPattern = useCallback((patternId: string) => {
+    setCurrentDrumPattern(patternId)
+  }, [])
+
   return (
     <SequencerContext.Provider
       value={{
@@ -354,7 +544,14 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setPreset,
         synthParams,
         updateSynthParam,
-        selectCharacter
+        selectCharacter,
+        drumEnabled,
+        drumVolume,
+        currentDrumPattern,
+        drumPatterns,
+        toggleDrums,
+        setDrumVolume: setDrumVolumeCallback,
+        selectDrumPattern
       }}
     >
       {children}
