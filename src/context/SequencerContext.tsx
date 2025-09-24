@@ -104,13 +104,34 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     Tone.Transport.bpm.value = tempo
   }, [tempo])
 
-  const toggleCell = useCallback((row: number, col: number) => {
+  const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
     const newGrid = [...gridRef.current]
     newGrid[row] = [...newGrid[row]]
-    newGrid[row][col] = {
-      ...newGrid[row][col],
-      active: !newGrid[row][col].active
+    const currentCell = newGrid[row][col]
+
+    if (shiftKey) {
+      // Shift-click: toggle between off and 0.8 velocity
+      newGrid[row][col] = {
+        active: !currentCell.active,
+        velocity: 0.8
+      }
+    } else {
+      // Regular click: cycle through velocity states
+      if (!currentCell.active) {
+        // Off -> Normal (0.8)
+        newGrid[row][col] = { active: true, velocity: 0.8 }
+      } else if (currentCell.velocity === 0.8) {
+        // Normal -> Emphasis (1.0)
+        newGrid[row][col] = { active: true, velocity: 1.0 }
+      } else if (currentCell.velocity === 1.0) {
+        // Emphasis -> Quiet (0.5)
+        newGrid[row][col] = { active: true, velocity: 0.5 }
+      } else {
+        // Quiet -> Off
+        newGrid[row][col] = { active: false, velocity: 0.8 }
+      }
     }
+
     gridRef.current = newGrid
     setGrid(newGrid)
   }, [])
@@ -144,20 +165,20 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
           // Play notes for this step
           const baseNotes = ['C', 'D', 'E', 'G', 'A']
-          const notes: string[] = []
 
           for (let row = 0; row < 16; row++) {
-            if (gridRef.current[row][step].active) {
+            const cell = gridRef.current[row][step]
+            if (cell.active) {
               const noteIndex = 15 - row
               const octave = Math.floor(noteIndex / 5) + 2
               const scaleIndex = noteIndex % 5
               const note = baseNotes[scaleIndex] + octave
-              notes.push(note)
-            }
-          }
 
-          if (notes.length > 0 && synthRef.current) {
-            synthRef.current.triggerAttackRelease(notes, '16n', time)
+              if (synthRef.current) {
+                // Play each note with its individual velocity
+                synthRef.current.triggerAttackRelease(note, '16n', time, cell.velocity)
+              }
+            }
           }
         },
         Array(16).fill(0).map((_, i) => i),
