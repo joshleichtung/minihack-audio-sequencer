@@ -4,7 +4,7 @@
 
 ![VibeLoop Demo](https://github.com/joshleichtung/minihack-audio-sequencer/raw/main/vibeloop-demo.gif)
 
-A web-based Tenori-On style audio grid sequencer with LCARS (Star Trek) visual aesthetics, featuring real-time effects and realistic drum machines.
+A web-based audio grid sequencer with LCARS (Star Trek) visual aesthetics, featuring real-time effects and realistic drum machines.
 
 **⚡ 2-hour hackfest project built as part of [AllThingsWeb.dev](https://allthingsweb.dev/)**
 
@@ -82,7 +82,6 @@ npm run build
 
 ## 🎨 Design Inspiration
 
-- **Tenori-On**: Yamaha's innovative LED grid sequencer
 - **LCARS**: Star Trek's Library Computer Access/Retrieval System UI
 - **Modern Web Audio**: Bringing hardware sequencer experience to the browser
 
