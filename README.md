@@ -6,6 +6,8 @@
 
 A web-based Tenori-On style audio grid sequencer with LCARS (Star Trek) visual aesthetics, featuring real-time effects and realistic drum machines.
 
+**⚡ 2-hour hackfest project built as part of [AllThingsWeb.dev](https://allthingsweb.dev/)**
+
 ![VibeLoop](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)
 [![Deployed on Fly.io](https://img.shields.io/badge/Deployed%20on-Fly.io-purple?style=for-the-badge)](https://vibeloop.fly.dev/)
 
