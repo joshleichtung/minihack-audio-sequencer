@@ -45,6 +45,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   )
 
   const [grid, setGrid] = useState<Cell[][]>(initGrid)
+  const gridRef = useRef<Cell[][]>(initGrid())
   const [isPlaying, setIsPlaying] = useState(false)
   const [tempo, setTempo] = useState(120)
   const [currentStep, setCurrentStep] = useState(0)
@@ -98,77 +99,85 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [synthParams])
 
+  // Update tempo
+  useEffect(() => {
+    Tone.Transport.bpm.value = tempo
+  }, [tempo])
+
   const toggleCell = useCallback((row: number, col: number) => {
-    setGrid(prev => {
-      const newGrid = [...prev]
-      newGrid[row][col] = {
-        ...newGrid[row][col],
-        active: !newGrid[row][col].active
-      }
-      return newGrid
-    })
+    const newGrid = [...gridRef.current]
+    newGrid[row] = [...newGrid[row]]
+    newGrid[row][col] = {
+      ...newGrid[row][col],
+      active: !newGrid[row][col].active
+    }
+    gridRef.current = newGrid
+    setGrid(newGrid)
   }, [])
-
-  const playStep = useCallback((time: number, step: number) => {
-    setCurrentStep(step)
-
-    // C major pentatonic scale
-    const scale = Scale.get('C4 pentatonic major').notes
-
-    // Play all active cells in this column
-    const notes: string[] = []
-    for (let row = 0; row < 16; row++) {
-      if (grid[row][step].active) {
-        // Map row to note (bottom row = low note, top row = high note)
-        const noteIndex = 15 - row
-        const octaveOffset = Math.floor(noteIndex / 5)
-        const scaleIndex = noteIndex % 5
-        const note = scale[scaleIndex]
-        if (note) {
-          const noteWithOctave = note.slice(0, -1) + (parseInt(note.slice(-1)) + octaveOffset)
-          notes.push(noteWithOctave)
-        }
-      }
-    }
-
-    if (notes.length > 0 && synthRef.current) {
-      synthRef.current.triggerAttackRelease(notes, '16n', time)
-    }
-  }, [grid])
 
   const togglePlayback = useCallback(async () => {
     if (isPlaying) {
-      await Tone.Transport.stop()
+      Tone.Transport.stop()
+      Tone.Transport.cancel()
       if (sequencerRef.current) {
         sequencerRef.current.stop()
+        sequencerRef.current.dispose()
+        sequencerRef.current = null
       }
       setCurrentStep(0)
       setIsPlaying(false)
     } else {
       await Tone.start()
 
-      // Create sequence
+      // Clean up any existing sequence
       if (sequencerRef.current) {
         sequencerRef.current.dispose()
       }
 
-      sequencerRef.current = new Tone.Sequence(
-        (time, step) => playStep(time, step),
+      // Create new sequence with current grid state
+      const seq = new Tone.Sequence(
+        (time, step) => {
+          // Update UI
+          Tone.Draw.schedule(() => {
+            setCurrentStep(step)
+          }, time)
+
+          // Play notes for this step
+          const baseNotes = ['C', 'D', 'E', 'G', 'A']
+          const notes: string[] = []
+
+          for (let row = 0; row < 16; row++) {
+            if (gridRef.current[row][step].active) {
+              const noteIndex = 15 - row
+              const octave = Math.floor(noteIndex / 5) + 2
+              const scaleIndex = noteIndex % 5
+              const note = baseNotes[scaleIndex] + octave
+              notes.push(note)
+            }
+          }
+
+          if (notes.length > 0 && synthRef.current) {
+            synthRef.current.triggerAttackRelease(notes, '16n', time)
+          }
+        },
         Array(16).fill(0).map((_, i) => i),
         '16n'
       )
 
-      sequencerRef.current.loop = true
-      sequencerRef.current.start(0)
+      seq.loop = true
+      seq.start(0)
+      sequencerRef.current = seq
 
       Tone.Transport.bpm.value = tempo
-      await Tone.Transport.start()
+      Tone.Transport.start()
       setIsPlaying(true)
     }
-  }, [isPlaying, tempo, playStep])
+  }, [isPlaying, tempo])
 
   const clearGrid = useCallback(() => {
-    setGrid(initGrid())
+    const newGrid = initGrid()
+    gridRef.current = newGrid
+    setGrid(newGrid)
     setCurrentStep(0)
   }, [])
 
@@ -222,6 +231,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         break
     }
 
+    gridRef.current = newGrid
     setGrid(newGrid)
   }, [])
 
