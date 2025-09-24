@@ -4,6 +4,7 @@ import Transport from './components/Transport'
 import SynthControls from './components/SynthControls'
 import PresetButtons from './components/PresetButtons'
 import DrumControls from './components/DrumControls'
+import EffectsControls from './components/EffectsControls'
 import Visualizer from './components/Visualizer'
 import { SequencerProvider, useSequencer } from './context/SequencerContext'
 
@@ -45,6 +46,7 @@ const AppContent = () => {
           <div className="flex flex-col gap-4">
             <div className="bg-lcars-peach rounded-t-lg rounded-b-3xl w-20 h-32" />
             <SynthControls />
+            <EffectsControls />
           </div>
 
           {/* Left Visualizer */}

@@ -34,7 +34,14 @@ interface SequencerContextType {
     waveform: string
     character: string
   }
+  effectsParams: {
+    reverb: number
+    delay: number
+    chorus: number
+    wahFilter: number
+  }
   updateSynthParam: (param: string, value: number | string) => void
+  updateEffectsParam: (param: string, value: number) => void
   selectCharacter: (character: string) => void
   drumEnabled: boolean
   drumVolume: number
@@ -77,6 +84,13 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     character: 'default' // Synth patch
   })
 
+  const [effectsParams, setEffectsParams] = useState({
+    reverb: 0,      // 0-100 room to hall
+    delay: 0,       // 0-100 off to rhythmic
+    chorus: 0,      // 0-100 subtle to lush
+    wahFilter: 0    // 0-100 off to squelchy wah
+  })
+
   const [drumEnabled, setDrumEnabled] = useState(false)
   const [drumVolume, setDrumVolume] = useState(-6) // dB
   const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
@@ -87,6 +101,12 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const drumGainRef = useRef<Tone.Gain | null>(null)
   const drumEnabledRef = useRef(drumEnabled)
   const currentDrumPatternRef = useRef(currentDrumPattern)
+
+  // Effects refs
+  const reverbRef = useRef<Tone.Reverb | null>(null)
+  const delayRef = useRef<Tone.FeedbackDelay | null>(null)
+  const chorusRef = useRef<Tone.Chorus | null>(null)
+  const wahFilterRef = useRef<Tone.AutoWah | null>(null)
 
   // Drum patterns database
   const drumPatterns: DrumPattern[] = [
@@ -194,7 +214,27 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Initialize Tone.js
   useEffect(() => {
-    synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination()
+    // Create effects chain
+    reverbRef.current = new Tone.Reverb(0.8)
+    delayRef.current = new Tone.FeedbackDelay('8n', 0.3)
+    chorusRef.current = new Tone.Chorus(4, 2.5, 0.5)
+    wahFilterRef.current = new Tone.AutoWah(50, 6, 0)
+
+    // Set initial effects levels (all off)
+    reverbRef.current.wet.value = 0
+    delayRef.current.wet.value = 0
+    chorusRef.current.wet.value = 0
+    wahFilterRef.current.wet.value = 0
+
+    // Chain effects: Synth → Wah → Chorus → Delay → Reverb → Destination
+    const effectsChain = [
+      wahFilterRef.current,
+      chorusRef.current,
+      delayRef.current,
+      reverbRef.current
+    ]
+
+    synthRef.current = new Tone.PolySynth(Tone.Synth)
     synthRef.current.set({
       oscillator: { type: 'sawtooth' as any },
       envelope: {
@@ -204,6 +244,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         release: 0.3
       }
     })
+
+    // Connect synth through effects chain to destination
+    synthRef.current.chain(...effectsChain, Tone.Destination)
 
     // Initialize drum gain node
     drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
@@ -242,6 +285,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (drumGainRef.current) {
         drumGainRef.current.dispose()
       }
+      // Dispose effects
+      if (reverbRef.current) reverbRef.current.dispose()
+      if (delayRef.current) delayRef.current.dispose()
+      if (chorusRef.current) chorusRef.current.dispose()
+      if (wahFilterRef.current) wahFilterRef.current.dispose()
     }
   }, [])
 
@@ -523,6 +571,41 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }))
   }, [])
 
+  const updateEffectsParam = useCallback((param: string, value: number) => {
+    setEffectsParams(prev => ({
+      ...prev,
+      [param]: value
+    }))
+
+    // Update effects in real-time
+    const wetValue = value / 100 // Convert 0-100 to 0-1
+
+    switch (param) {
+      case 'reverb':
+        if (reverbRef.current) {
+          reverbRef.current.wet.value = wetValue
+        }
+        break
+      case 'delay':
+        if (delayRef.current) {
+          delayRef.current.wet.value = wetValue
+        }
+        break
+      case 'chorus':
+        if (chorusRef.current) {
+          chorusRef.current.wet.value = wetValue
+        }
+        break
+      case 'wahFilter':
+        if (wahFilterRef.current) {
+          wahFilterRef.current.wet.value = wetValue
+          // Adjust wah intensity based on value
+          wahFilterRef.current.gain.value = wetValue * 8 // 0 to 8 intensity
+        }
+        break
+    }
+  }, [])
+
   const toggleDrums = useCallback(() => {
     setDrumEnabled(prev => !prev)
   }, [])
@@ -553,7 +636,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         clearGrid,
         setPreset,
         synthParams,
+        effectsParams,
         updateSynthParam,
+        updateEffectsParam,
         selectCharacter,
         drumEnabled,
         drumVolume,
