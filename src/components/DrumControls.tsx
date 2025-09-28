@@ -1,4 +1,4 @@
-import { useSequencer } from '../context/SequencerContext'
+import { useSequencer } from '../context/SequencerContextImproved'
 
 type DrumPattern = {
   id: string
@@ -88,15 +88,53 @@ const DrumPatternSelector = ({
   </div>
 )
 
+const DrumKitSelector = ({
+  drumKits,
+  currentDrumKit,
+  drumEnabled,
+  onKitSelect,
+}: {
+  drumKits: Array<{ id: string; name: string; description: string }>
+  currentDrumKit: string
+  drumEnabled: boolean
+  onKitSelect: (kitId: string) => void
+}): JSX.Element => (
+  <div>
+    <label className="text-lcars-orange text-sm mb-2 block">DRUM KIT</label>
+    <div className="grid grid-cols-2 gap-2">
+      {drumKits.map((kit) => (
+        <button
+          key={kit.id}
+          onClick={(): void => onKitSelect(kit.id)}
+          disabled={!drumEnabled}
+          className={`px-3 py-2 rounded text-xs min-h-[48px] touch-manipulation ${
+            currentDrumKit === kit.id && drumEnabled
+              ? 'bg-lcars-purple text-black'
+              : drumEnabled
+              ? 'bg-gray-700 text-white hover:bg-gray-600'
+              : 'bg-gray-800 text-gray-500'
+          }`}
+        >
+          <div className="font-bold">{kit.name}</div>
+          <div className="text-xs opacity-75">{kit.description}</div>
+        </button>
+      ))}
+    </div>
+  </div>
+)
+
 const DrumControls = (): JSX.Element => {
   const {
     drumEnabled,
     drumVolume,
     currentDrumPattern,
+    currentDrumKit,
     drumPatterns,
+    drumKits,
     toggleDrums,
     setDrumVolume,
-    selectDrumPattern
+    selectDrumPattern,
+    selectDrumKit
   } = useSequencer()
 
   return (
@@ -108,6 +146,12 @@ const DrumControls = (): JSX.Element => {
           drumVolume={drumVolume}
           drumEnabled={drumEnabled}
           onVolumeChange={setDrumVolume}
+        />
+        <DrumKitSelector
+          drumKits={drumKits}
+          currentDrumKit={currentDrumKit}
+          drumEnabled={drumEnabled}
+          onKitSelect={selectDrumKit}
         />
         <DrumPatternSelector
           drumPatterns={drumPatterns}
