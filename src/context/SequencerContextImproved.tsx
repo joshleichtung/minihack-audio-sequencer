@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
+import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
 
 interface Cell {
   active: boolean
@@ -51,10 +52,13 @@ interface SequencerContextType {
   drumEnabled: boolean
   drumVolume: number
   currentDrumPattern: string
+  currentDrumKit: string
   drumPatterns: DrumPattern[]
+  drumKits: typeof DRUM_KITS
   toggleDrums: () => void
   setDrumVolume: (volume: number) => void
   selectDrumPattern: (patternId: string) => void
+  selectDrumKit: (kitId: string) => void
 }
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -106,12 +110,15 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [drumEnabled, setDrumEnabled] = useState(false)
   const [drumVolume, setDrumVolume] = useState(-6)
   const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
+  const [currentDrumKit, setCurrentDrumKit] = useState('808')
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const drumSynthsRef = useRef<{[key: string]: any}>({})
+  const drumSynthesizerRef = useRef<DrumSynthesizer | null>(null)
   const drumGainRef = useRef<Tone.Gain | null>(null)
   const drumEnabledRef = useRef(drumEnabled)
   const currentDrumPatternRef = useRef(currentDrumPattern)
+  const currentDrumKitRef = useRef(currentDrumKit)
 
   // Effects refs
   const reverbRef = useRef<Tone.Reverb | null>(null)
@@ -261,6 +268,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Initialize drum gain node
     drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
 
+    // Initialize drum synthesizer
+    drumSynthesizerRef.current = new DrumSynthesizer(drumGainRef.current)
+    drumSynthesizerRef.current.setKit(currentDrumKit)
+
     // Initialize drum synthesizers with improved sounds
     initializeDrumSynths()
 
@@ -279,103 +290,60 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [drumVolume])
 
   const initializeDrumSynths = () => {
-    // KICK DRUM - Improved with pitch envelope
-    const kickEnvelope = new Tone.Envelope({
-      attack: 0.01,
-      decay: 0.2,
-      sustain: 0,
-      release: 0.2
-    })
+    if (!drumSynthesizerRef.current) return
 
-    const kickPitchEnv = new Tone.Envelope({
-      attack: 0.01,
-      decay: 0.08,
-      sustain: 0,
-      release: 0
-    })
-
-    const kickOsc = new Tone.Oscillator(60, 'sine')
-    kickPitchEnv.connect(kickOsc.frequency)
-    kickEnvelope.connect(kickOsc.volume)
-
-    const kickLowpass = new Tone.Filter(100, 'lowpass')
-    kickOsc.connect(kickLowpass)
-    kickLowpass.connect(drumGainRef.current!)
-
-    const kickSynth = {
-      triggerAttackRelease: (_note: string, duration: string, time?: string) => {
-        if (time) {
-          kickEnvelope.triggerAttackRelease(duration, time)
-          kickPitchEnv.triggerAttackRelease(duration, time)
-          kickOsc.start(time).stop(time + 0.5)
-        } else {
-          kickEnvelope.triggerAttackRelease(duration)
-          kickPitchEnv.triggerAttackRelease(duration)
-          kickOsc.start().stop('+0.5')
-        }
-      }
-    }
-
-    // SNARE DRUM - Layered for more punch
-    const snareNoise = new Tone.NoiseSynth({
-      noise: { type: 'white' },
-      envelope: { attack: 0.001, decay: 0.13, sustain: 0, release: 0.03 }
-    })
-
-    const snareTone = new Tone.Synth({
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.02 }
-    })
-
-    const snareFilter = new Tone.Filter(3000, 'highpass')
-    const snareMix = new Tone.Gain(0.7)
-
-    snareNoise.connect(snareMix)
-    snareTone.connect(snareMix)
-    snareMix.connect(snareFilter)
-    snareFilter.connect(drumGainRef.current!)
-
-    const snareSynth = {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        if (time) {
-          snareNoise.triggerAttackRelease(duration, time)
-          snareTone.triggerAttackRelease('G3', duration, time)
-        } else {
-          snareNoise.triggerAttackRelease(duration)
-          snareTone.triggerAttackRelease('G3', duration)
-        }
-      }
-    }
-
-    // HI-HAT - Metallic sound
-    const hihatFilter = new Tone.Filter(10000, 'highpass')
-    const hihatSynth = new Tone.MetalSynth({
-      envelope: { attack: 0.001, decay: 0.06, sustain: 0, release: 0.01 },
-      harmonicity: 12,
-      modulationIndex: 32,
-      resonance: 4000,
-      octaves: 1
-    })
-    hihatSynth.connect(hihatFilter)
-    hihatFilter.connect(drumGainRef.current!)
-
-    // OPEN HAT - Longer metallic sound
-    const openhatFilter = new Tone.Filter(8000, 'highpass')
-    const openhatSynth = new Tone.MetalSynth({
-      envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 0.3 },
-      harmonicity: 10,
-      modulationIndex: 16,
-      resonance: 3000,
-      octaves: 1.5
-    })
-    openhatSynth.connect(openhatFilter)
-    openhatFilter.connect(drumGainRef.current!)
+    // Create new drum synths using the advanced synthesis
+    const kick = drumSynthesizerRef.current.createDrumSynth('kick')
+    const snare = drumSynthesizerRef.current.createDrumSynth('snare')
+    const hihat = drumSynthesizerRef.current.createDrumSynth('hihat')
+    const openhat = drumSynthesizerRef.current.createDrumSynth('openhat')
 
     drumSynthsRef.current = {
-      kick: kickSynth,
-      snare: snareSynth,
-      hihat: hihatSynth,
-      openhat: openhatSynth
+      kick: kick || createFallbackKick(),
+      snare: snare || createFallbackSnare(),
+      hihat: hihat || createFallbackHihat(),
+      openhat: openhat || createFallbackOpenhat()
+    }
+  }
+
+  // Fallback drum implementations (simplified versions)
+  const createFallbackKick = () => {
+    const synth = new Tone.MembraneSynth().connect(drumGainRef.current!)
+    return {
+      triggerAttackRelease: (duration: string, time?: string) => {
+        synth.triggerAttackRelease('C1', duration, time)
+      },
+      dispose: () => synth.dispose()
+    }
+  }
+
+  const createFallbackSnare = () => {
+    const synth = new Tone.NoiseSynth().connect(drumGainRef.current!)
+    return {
+      triggerAttackRelease: (duration: string, time?: string) => {
+        synth.triggerAttackRelease(duration, time)
+      },
+      dispose: () => synth.dispose()
+    }
+  }
+
+  const createFallbackHihat = () => {
+    const synth = new Tone.MetalSynth().connect(drumGainRef.current!)
+    return {
+      triggerAttackRelease: (duration: string, time?: string) => {
+        synth.triggerAttackRelease('C5', duration, time)
+      },
+      dispose: () => synth.dispose()
+    }
+  }
+
+  const createFallbackOpenhat = () => {
+    const synth = new Tone.MetalSynth().connect(drumGainRef.current!)
+    return {
+      triggerAttackRelease: (duration: string, time?: string) => {
+        synth.triggerAttackRelease('C5', duration, time)
+      },
+      dispose: () => synth.dispose()
     }
   }
 
@@ -396,6 +364,16 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     currentDrumPatternRef.current = currentDrumPattern
   }, [currentDrumPattern])
+
+  useEffect(() => {
+    currentDrumKitRef.current = currentDrumKit
+    if (drumSynthesizerRef.current) {
+      drumSynthesizerRef.current.setKit(currentDrumKit)
+      // Reinitialize drum synths with new kit
+      disposeDrumSynths()
+      initializeDrumSynths()
+    }
+  }, [currentDrumKit])
 
   const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
     const newGrid = [...gridRef.current]
@@ -634,6 +612,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentDrumPattern(patternId)
   }, [])
 
+  const selectDrumKit = useCallback((kitId: string) => {
+    setCurrentDrumKit(kitId)
+  }, [])
+
   // Update synth parameters
   useEffect(() => {
     if (synthRef.current) {
@@ -675,10 +657,13 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         drumEnabled,
         drumVolume,
         currentDrumPattern,
+        currentDrumKit,
         drumPatterns,
+        drumKits: DRUM_KITS,
         toggleDrums,
         setDrumVolume: setDrumVolumeCallback,
-        selectDrumPattern
+        selectDrumPattern,
+        selectDrumKit
       }}
     >
       {children}
