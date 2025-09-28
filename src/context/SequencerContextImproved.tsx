@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
 import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
+import { mobileAudioManager } from '../audio/MobileAudioFix'
 
 interface Cell {
   active: boolean
@@ -229,6 +230,15 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [drumPatterns])
 
+  // Initialize mobile audio unlock listeners
+  useEffect(() => {
+    mobileAudioManager.addUnlockListeners()
+
+    return () => {
+      mobileAudioManager.removeUnlockListeners()
+    }
+  }, [])
+
   // Initialize Tone.js
   useEffect(() => {
     // Create effects chain
@@ -419,7 +429,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       currentStepRef.current = 0
       setIsPlaying(false)
     } else {
-      await Tone.start()
+      // Ensure mobile audio is properly initialized
+      await mobileAudioManager.initializeAudio()
 
       // Initialize timing
       nextStepTimeRef.current = Tone.context.currentTime + 0.1 // Start slightly in the future
