@@ -1,5 +1,5 @@
 import { Sparkles, Zap, TrendingDown, TrendingUp } from 'lucide-react'
-import { useSequencer } from '../context/SequencerContext'
+import { useSequencer } from '../context/SequencerContextImproved'
 
 const PresetButtons = (): JSX.Element => {
   const { setPreset } = useSequencer()
@@ -13,10 +13,12 @@ const PresetButtons = (): JSX.Element => {
 
   return (
     <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-peach">
-      <h2 className="text-lcars-peach font-bold mb-3 sm:mb-4 text-sm sm:text-base">PRESET PATTERNS</h2>
+      <h2 className="text-lcars-peach font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+        PRESET PATTERNS
+      </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
-        {presets.map((preset) => {
+        {presets.map(preset => {
           const Icon = preset.icon
           return (
             <button

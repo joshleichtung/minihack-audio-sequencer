@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSequencer } from '../context/SequencerContext'
+import { useSequencer } from '../context/SequencerContextImproved'
 
 interface VisualizerProps {
   side: 'left' | 'right'
@@ -23,7 +23,7 @@ const Visualizer = ({ side }: VisualizerProps): JSX.Element => {
       const brightnessInfluence = synthParams.brightness / 100
       const textureInfluence = (synthParams.texture / 100) * 0.3
 
-      return Math.min(100, (stepInfluence * 60 + brightnessInfluence * 30 + textureInfluence * 10))
+      return Math.min(100, stepInfluence * 60 + brightnessInfluence * 30 + textureInfluence * 10)
     })
 
     setBars(newBars)
@@ -48,7 +48,7 @@ const Visualizer = ({ side }: VisualizerProps): JSX.Element => {
           `}
           style={{
             height: `${Math.max(4, height)}%`,
-            opacity: isPlaying ? 0.8 : 0.3
+            opacity: isPlaying ? 0.8 : 0.3,
           }}
         />
       ))}

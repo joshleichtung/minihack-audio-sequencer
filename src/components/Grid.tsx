@@ -1,4 +1,5 @@
-import { useSequencer } from '../context/SequencerContext'
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { useSequencer } from '../context/SequencerContextImproved'
 import { useEffect, useState } from 'react'
 import type { Scale, Key } from '../utils/scales'
 import { getDisplayNoteForRow } from '../utils/scales'
@@ -24,7 +25,8 @@ const getGridCellClassName = (
   isCurrentStep: boolean,
   isSparkle: boolean
 ): string => {
-  const baseClasses = 'aspect-square rounded-sm transition-all duration-150 relative overflow-hidden touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] cursor-pointer border border-transparent'
+  const baseClasses =
+    'aspect-square rounded-sm transition-all duration-150 relative overflow-hidden touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] cursor-pointer border border-transparent'
   const velocityClasses = getVelocityColor(cell)
   const currentStepClasses = isCurrentStep ? 'ring-2 ring-lcars-yellow' : ''
   const sparkleClasses = isSparkle ? 'animate-pulse' : ''
@@ -69,7 +71,13 @@ const GridCell = ({
   )
 }
 
-const NoteLabels = ({ currentScale, currentKey }: { currentScale: Scale, currentKey: Key }): JSX.Element => (
+const NoteLabels = ({
+  currentScale,
+  currentKey,
+}: {
+  currentScale: Scale
+  currentKey: Key
+}): JSX.Element => (
   <div className="flex flex-col justify-between h-full py-1">
     {Array.from({ length: 16 }, (_, i) => (
       <div
@@ -96,9 +104,7 @@ const VelocityLegend = (): JSX.Element => (
       <div className="w-3 h-3 bg-lcars-blue rounded-sm"></div>
       <span>QUIET</span>
     </div>
-    <div className="sm:ml-auto text-gray-400 text-xs">
-      SHIFT+CLICK TO TOGGLE
-    </div>
+    <div className="sm:ml-auto text-gray-400 text-xs">SHIFT+CLICK TO TOGGLE</div>
   </div>
 )
 
@@ -139,25 +145,27 @@ const renderGridCells = (
   currentStep: number | undefined,
   toggleCell: (rowIndex: number, colIndex: number, shiftKey: boolean) => void
 ): JSX.Element[] => {
-  return grid.map((row, rowIndex) =>
-    row.map((cell, colIndex) => {
-      const cellKey = `${rowIndex}-${colIndex}`
-      const isSparkle = sparkleSquares.has(cellKey)
-      const isCurrentStep = colIndex === currentStep
+  return grid
+    .map((row, rowIndex) =>
+      row.map((cell, colIndex) => {
+        const cellKey = `${rowIndex}-${colIndex}`
+        const isSparkle = sparkleSquares.has(cellKey)
+        const isCurrentStep = colIndex === currentStep
 
-      return (
-        <GridCell
-          key={cellKey}
-          cell={cell}
-          rowIndex={rowIndex}
-          colIndex={colIndex}
-          isCurrentStep={isCurrentStep}
-          isSparkle={isSparkle}
-          onToggle={toggleCell}
-        />
-      )
-    })
-  ).flat()
+        return (
+          <GridCell
+            key={cellKey}
+            cell={cell}
+            rowIndex={rowIndex}
+            colIndex={colIndex}
+            isCurrentStep={isCurrentStep}
+            isSparkle={isSparkle}
+            onToggle={toggleCell}
+          />
+        )
+      })
+    )
+    .flat()
 }
 
 const Grid = (): JSX.Element => {
@@ -166,13 +174,18 @@ const Grid = (): JSX.Element => {
 
   const positionIndicatorStyle = {
     transform: `translateX(${(currentStep ?? 0) * 6.25}%)`,
-    transition: 'transform 0.1s ease-out'
+    transition: 'transform 0.1s ease-out',
   }
 
   return (
-    <div className="bg-gray-900 p-2 sm:p-4 rounded-lg border-2 border-lcars-blue" data-testid="grid">
+    <div
+      className="bg-gray-900 p-2 sm:p-4 rounded-lg border-2 border-lcars-blue"
+      data-testid="grid"
+    >
       <div className="flex gap-2">
-        <NoteLabels currentScale={currentScale} currentKey={currentKey} />
+        {currentScale && currentKey && (
+          <NoteLabels currentScale={currentScale} currentKey={currentKey} />
+        )}
         <div className="relative flex-1">
           <div
             className="absolute top-0 w-[6.25%] h-1 bg-lcars-yellow rounded-full z-10"

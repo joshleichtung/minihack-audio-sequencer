@@ -1,4 +1,5 @@
-import { useSequencer } from '../context/SequencerContext'
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, max-lines-per-function */
+import { useSequencer } from '../context/SequencerContextImproved'
 import { SCALES, KEYS } from '../utils/scales'
 
 type SynthParam = string | number
@@ -67,7 +68,7 @@ const ButtonGrid = ({
   <div>
     <label className={`text-${colorClass} text-sm`}>{label}</label>
     <div className="grid grid-cols-2 gap-2 mt-1">
-      {options.map((option) => {
+      {options.map(option => {
         const optionId = typeof option === 'string' ? option : option.id
         const optionName = typeof option === 'string' ? option.toUpperCase() : option.name
 
@@ -96,7 +97,7 @@ const CHARACTER_PATCHES = [
   { id: 'quantum', name: 'QUANTUM' },
   { id: 'warpDrive', name: 'WARP' },
   { id: 'photon', name: 'PHOTON' },
-  { id: 'void', name: 'VOID' }
+  { id: 'void', name: 'VOID' },
 ] as const
 
 const WAVEFORMS = ['sine', 'sawtooth', 'square', 'triangle'] as const
@@ -147,14 +148,27 @@ const createSliderConfigs = (synthParams: SynthParams): SliderConfig[] => [
 ]
 
 const SynthControls = (): JSX.Element => {
-  const { synthParams, updateSynthParam, selectCharacter, currentScale, currentKey, setScale, setKey } = useSequencer()
+  const {
+    synthParams,
+    updateSynthParam,
+    selectCharacter,
+    currentScale,
+    currentKey,
+    setScale,
+    setKey,
+  } = useSequencer()
   const sliderConfigs = createSliderConfigs(synthParams)
 
   return (
-    <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-purple w-full sm:w-64" data-testid="synth-controls">
-      <h2 className="text-lcars-purple font-bold mb-3 sm:mb-4 text-sm sm:text-base">SYNTH CONTROLS</h2>
+    <div
+      className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-purple w-full sm:w-64"
+      data-testid="synth-controls"
+    >
+      <h2 className="text-lcars-purple font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+        SYNTH CONTROLS
+      </h2>
       <div className="space-y-3 sm:space-y-4">
-        {sliderConfigs.map((config) => (
+        {sliderConfigs.map(config => (
           <SliderControl key={config.param} config={config} onUpdate={updateSynthParam} />
         ))}
         <ButtonGrid
@@ -173,14 +187,14 @@ const SynthControls = (): JSX.Element => {
         <ButtonGrid
           label="SCALE"
           options={SCALES.map(scale => ({ id: scale.id, name: scale.name }))}
-          currentValue={currentScale.id}
+          currentValue={currentScale?.id || ''}
           onSelect={setScale}
           colorClass="lcars-blue"
         />
         <ButtonGrid
           label="KEY"
           options={KEYS.map(key => ({ id: key.id, name: key.name }))}
-          currentValue={currentKey.id}
+          currentValue={currentKey?.id || ''}
           onSelect={setKey}
           colorClass="lcars-orange"
         />

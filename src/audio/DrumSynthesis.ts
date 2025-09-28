@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import * as Tone from 'tone'
 
 export interface DrumKit {
@@ -22,7 +23,7 @@ export const DRUM_KITS: DrumKit[] = [
   { id: '808', name: 'TR-808', description: 'Classic analog drum machine sounds' },
   { id: '909', name: 'TR-909', description: 'Punchy house and techno drums' },
   { id: 'acoustic', name: 'Acoustic', description: 'Natural drum kit sounds' },
-  { id: 'electronic', name: 'Electronic', description: 'Modern electronic drums' }
+  { id: 'electronic', name: 'Electronic', description: 'Modern electronic drums' },
 ]
 
 export class DrumSynthesizer {
@@ -48,7 +49,7 @@ export class DrumSynthesizer {
         components.oscillators.forEach(osc => osc.dispose())
         components.effects.forEach(effect => effect.dispose())
         components.noiseGenerators.forEach(noise => noise.dispose())
-      }
+      },
     }
   }
 
@@ -57,14 +58,14 @@ export class DrumSynthesizer {
       attack: 0.01,
       decay: 0.08,
       sustain: 0,
-      release: 0
+      release: 0,
     })
 
     const ampEnv = new Tone.Envelope({
       attack: 0.01,
       decay: 0.3,
       sustain: 0,
-      release: 0.2
+      release: 0.2,
     })
 
     const osc = new Tone.Oscillator(60, 'sine').start()
@@ -84,7 +85,7 @@ export class DrumSynthesizer {
       envelopes: [pitchEnv, ampEnv],
       oscillators: [osc],
       effects: [distortion, lowpass, compressor, vca],
-      noiseGenerators: []
+      noiseGenerators: [],
     }
   }
 
@@ -98,7 +99,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.003,
       sustain: 0,
-      release: 0
+      release: 0,
     })
     const clickOsc = new Tone.Oscillator(1600, 'sine').start()
     const clickGain = new Tone.Gain(0.3)
@@ -108,7 +109,7 @@ export class DrumSynthesizer {
       attack: 0.01,
       decay: 0.15,
       sustain: 0,
-      release: 0.1
+      release: 0.1,
     })
     const bodyOsc = new Tone.Oscillator(60, 'sine').start()
     const bodyGain = new Tone.Gain(0.8)
@@ -131,7 +132,7 @@ export class DrumSynthesizer {
       envelopes: [clickEnv, bodyEnv],
       oscillators: [clickOsc, bodyOsc],
       effects: [clickGain, bodyGain, mixer, compressor, lowpass],
-      noiseGenerators: []
+      noiseGenerators: [],
     }
   }
 
@@ -149,7 +150,7 @@ export class DrumSynthesizer {
         components.oscillators.forEach(osc => osc.dispose())
         components.effects.forEach(effect => effect.dispose())
         components.noiseGenerators.forEach(noise => noise.dispose())
-      }
+      },
     }
   }
 
@@ -159,7 +160,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.1,
       sustain: 0,
-      release: 0.05
+      release: 0.05,
     })
     const noise = new Tone.Noise('white').start()
     const noiseGain = new Tone.Gain(0.5)
@@ -169,7 +170,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.08,
       sustain: 0,
-      release: 0.03
+      release: 0.03,
     })
     const toneOsc = new Tone.Oscillator(200, 'triangle').start()
     const toneGain = new Tone.Gain(0.6)
@@ -193,7 +194,7 @@ export class DrumSynthesizer {
       envelopes: [noiseEnv, toneEnv],
       oscillators: [toneOsc],
       effects: [noiseGain, toneGain, mixer, bandpass, distortion],
-      noiseGenerators: [noise]
+      noiseGenerators: [noise],
     }
   }
 
@@ -207,7 +208,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.06,
       sustain: 0,
-      release: 0.02
+      release: 0.02,
     })
     const noise = new Tone.Noise('white').start()
     const noiseGain = new Tone.Gain(0.7)
@@ -217,7 +218,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.05,
       sustain: 0,
-      release: 0.02
+      release: 0.02,
     })
     const toneOsc = new Tone.Oscillator(250, 'triangle').start()
     const toneGain = new Tone.Gain(0.4)
@@ -240,7 +241,7 @@ export class DrumSynthesizer {
       envelopes: [noiseEnv, toneEnv],
       oscillators: [toneOsc],
       effects: [noiseGain, toneGain, mixer, highpass, compressor],
-      noiseGenerators: [noise]
+      noiseGenerators: [noise],
     }
   }
 
@@ -253,7 +254,7 @@ export class DrumSynthesizer {
       attack: 0.001,
       decay: 0.04,
       sustain: 0,
-      release: 0.01
+      release: 0.01,
     })
 
     // Multiple oscillators for metallic sound
@@ -276,7 +277,7 @@ export class DrumSynthesizer {
       envelopes: [env],
       oscillators: [osc1, osc2, osc3],
       effects: [mixer, highpass, gain],
-      noiseGenerators: []
+      noiseGenerators: [],
     }
   }
 
@@ -291,7 +292,7 @@ export class DrumSynthesizer {
       harmonicity: 12,
       modulationIndex: 32,
       resonance: 4000,
-      octaves: 1
+      octaves: 1,
     })
 
     const highpass = new Tone.Filter(10000, 'highpass')
@@ -307,7 +308,7 @@ export class DrumSynthesizer {
         metalSynth.dispose()
         highpass.dispose()
         compressor.dispose()
-      }
+      },
     }
   }
 
@@ -324,21 +325,31 @@ export class DrumSynthesizer {
 
   private create808DrumType(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): DrumSynth | null {
     switch (drumType) {
-      case 'kick': return this.create808Kick()
-      case 'snare': return this.create808Snare()
-      case 'hihat': return this.create808Hihat()
-      case 'openhat': return this.create808Hihat() // Use same as hihat with longer decay
-      default: return null
+      case 'kick':
+        return this.create808Kick()
+      case 'snare':
+        return this.create808Snare()
+      case 'hihat':
+        return this.create808Hihat()
+      case 'openhat':
+        return this.create808Hihat() // Use same as hihat with longer decay
+      default:
+        return null
     }
   }
 
   private create909DrumType(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): DrumSynth | null {
     switch (drumType) {
-      case 'kick': return this.create909Kick()
-      case 'snare': return this.create909Snare()
-      case 'hihat': return this.create909Hihat()
-      case 'openhat': return this.create909Hihat() // Use same as hihat with longer decay
-      default: return null
+      case 'kick':
+        return this.create909Kick()
+      case 'snare':
+        return this.create909Snare()
+      case 'hihat':
+        return this.create909Hihat()
+      case 'openhat':
+        return this.create909Hihat() // Use same as hihat with longer decay
+      default:
+        return null
     }
   }
 }

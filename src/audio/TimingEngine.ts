@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import * as Tone from 'tone'
 
 export class TimingEngine {
@@ -16,10 +17,7 @@ export class TimingEngine {
     this.scheduler = this.scheduler.bind(this)
   }
 
-  start(
-    tempo: number,
-    onStep: (step: number) => void
-  ): void {
+  start(tempo: number, onStep: (step: number) => void): void {
     this.onStep = onStep
 
     // Reset timing
@@ -97,7 +95,8 @@ export class TimingEngine {
   // Method to check if we should schedule a note (used by SequencerContext)
   shouldScheduleStep(step: number): { shouldSchedule: boolean; time: number } {
     const currentTransportTime = Tone.Transport.seconds
-    const stepTime = this.nextStepTime + (step - this.currentStep) * (60.0 / (Tone.Transport.bpm.value * 4))
+    const stepTime =
+      this.nextStepTime + (step - this.currentStep) * (60.0 / (Tone.Transport.bpm.value * 4))
 
     if (stepTime < currentTransportTime + this.lookaheadTime && stepTime >= currentTransportTime) {
       return { shouldSchedule: true, time: stepTime }

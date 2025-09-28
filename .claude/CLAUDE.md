@@ -10,14 +10,40 @@ Audio.
 
 ### 🚨 CRITICAL DEVELOPMENT RULES - NEVER SKIP
 
-1. **LINT BEFORE EVERY COMMIT**: Run `npm run lint` and fix ALL issues before
-   committing
-2. **COMMIT AND PUSH IMMEDIATELY**: After completing any feature/fix, commit AND
+1. **ZERO TOLERANCE FOR LINT ERRORS**: Run `npm run lint` and fix ALL issues
+   IMMEDIATELY. NEVER commit with linting errors. NO EXCEPTIONS.
+2. **NO --no-verify COMMITS**: Never use --no-verify flag. Fix lint issues
+   first.
+3. **LINT BEFORE EVERY CHANGE**: Run lint before making any code modifications
+4. **COMMIT AND PUSH IMMEDIATELY**: After completing any feature/fix, commit AND
    push to remote
-3. **NO UNCOMMITTED WORK**: Never leave working changes uncommitted at end of
+5. **NO UNCOMMITTED WORK**: Never leave working changes uncommitted at end of
    session
-4. **VALIDATE BUILDS**: Run `npm run build` to ensure no build errors before
+6. **VALIDATE BUILDS**: Run `npm run build` to ensure no build errors before
    major commits
+
+### 🛑 MANDATORY LINT ENFORCEMENT
+
+**BEFORE ANY CODE CHANGE:**
+
+```bash
+npm run lint    # MUST pass with 0 errors before proceeding
+```
+
+**BEFORE EVERY COMMIT:**
+
+```bash
+npm run lint    # MUST pass with 0 errors
+npm run build   # MUST pass without errors
+git commit      # Only if both above pass
+```
+
+**IF LINTING FAILS:**
+
+- Stop all development immediately
+- Fix ALL linting errors one by one
+- Run `npm run lint` until 0 errors remain
+- THEN continue with development
 
 ### Git Workflow - MANDATORY
 

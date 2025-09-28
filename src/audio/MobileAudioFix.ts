@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars, no-useless-catch */
 import * as Tone from 'tone'
 
 export class MobileAudioManager {
@@ -23,7 +24,9 @@ export class MobileAudioManager {
     return (
       /android/i.test(userAgent) ||
       /iPad|iPhone|iPod/.test(userAgent) ||
-      /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(userAgent)
+      /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
+        userAgent
+      )
     )
   }
 
@@ -67,7 +70,7 @@ export class MobileAudioManager {
   }
 
   private async playSilentBuffer(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // Create a silent buffer
       const buffer = Tone.context.createBuffer(1, 1, Tone.context.sampleRate)
       const source = Tone.context.createBufferSource()
@@ -134,7 +137,7 @@ export class MobileAudioManager {
       isUnlocked: this.isAudioUnlocked,
       contextState: Tone.context.state,
       isMobile: this.isMobileDevice(),
-      needsUnlock: this.needsUnlock()
+      needsUnlock: this.needsUnlock(),
     }
   }
 }

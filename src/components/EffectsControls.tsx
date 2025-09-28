@@ -1,4 +1,4 @@
-import { useSequencer } from '../context/SequencerContext'
+import { useSequencer } from '../context/SequencerContextImproved'
 
 type EffectSliderProps = {
   label: string
@@ -18,7 +18,7 @@ const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps
       min="0"
       max="100"
       value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={e => onChange(Number(e.target.value))}
       className="w-full h-8 touch-manipulation"
     />
     <div className="text-xs text-gray-400 mt-1">{description}</div>
@@ -47,20 +47,20 @@ const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): JSX.Elemen
   const presets = [
     {
       name: 'DRY',
-      values: { reverb: 0, delay: 0, chorus: 0, wahFilter: 0 }
+      values: { reverb: 0, delay: 0, chorus: 0, wahFilter: 0 },
     },
     {
       name: 'SPACE',
-      values: { reverb: 40, delay: 25, chorus: 20, wahFilter: 0 }
+      values: { reverb: 40, delay: 25, chorus: 20, wahFilter: 0 },
     },
     {
       name: 'LUSH',
-      values: { reverb: 15, delay: 0, chorus: 60, wahFilter: 35 }
+      values: { reverb: 15, delay: 0, chorus: 60, wahFilter: 35 },
     },
     {
       name: 'FUNK',
-      values: { reverb: 10, delay: 45, chorus: 10, wahFilter: 70 }
-    }
+      values: { reverb: 10, delay: 45, chorus: 10, wahFilter: 70 },
+    },
   ]
 
   const applyPreset = (values: Record<string, number>): void => {
@@ -73,7 +73,7 @@ const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): JSX.Elemen
     <div className="pt-2 border-t border-gray-700">
       <div className="text-lcars-purple text-xs mb-2">QUICK PRESETS</div>
       <div className="grid grid-cols-2 gap-2">
-        {presets.map((preset) => (
+        {presets.map(preset => (
           <PresetButton
             key={preset.name}
             name={preset.name}
@@ -90,35 +90,37 @@ const EffectsControls = (): JSX.Element => {
 
   return (
     <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-purple w-full sm:w-64">
-      <h2 className="text-lcars-purple font-bold mb-3 sm:mb-4 text-sm sm:text-base">SYNTH EFFECTS</h2>
+      <h2 className="text-lcars-purple font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+        SYNTH EFFECTS
+      </h2>
 
       <div className="space-y-3 sm:space-y-4">
         <EffectSlider
           label="REVERB"
           value={effectsParams.reverb}
           description="ROOM → HALL"
-          onChange={(value) => updateEffectsParam('reverb', value)}
+          onChange={value => updateEffectsParam('reverb', value)}
         />
 
         <EffectSlider
           label="DELAY"
           value={effectsParams.delay}
           description="RHYTHMIC ECHO"
-          onChange={(value) => updateEffectsParam('delay', value)}
+          onChange={value => updateEffectsParam('delay', value)}
         />
 
         <EffectSlider
           label="CHORUS"
           value={effectsParams.chorus}
           description="SUBTLE → LUSH"
-          onChange={(value) => updateEffectsParam('chorus', value)}
+          onChange={value => updateEffectsParam('chorus', value)}
         />
 
         <EffectSlider
           label="WAH FILTER"
           value={effectsParams.wahFilter}
           description="SQUELCHY SWEEP"
-          onChange={(value) => updateEffectsParam('wahFilter', value)}
+          onChange={value => updateEffectsParam('wahFilter', value)}
         />
 
         <EffectsPresets updateEffectsParam={updateEffectsParam} />
