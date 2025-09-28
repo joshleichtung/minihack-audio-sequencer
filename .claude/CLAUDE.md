@@ -11,6 +11,9 @@ VibeLoop is a browser-based music sequencer with real-time audio synthesis, drum
 3. **Descriptive commit messages** with context and impact
 4. **Never work directly on main** - always use feature branches
 5. **Merge only with explicit approval** from project owner
+6. **Testing required** before any commit to feature branch
+7. **Quality gates** must pass before merge requests
+8. **Visual validation** using Maestro MCP for UI changes
 
 ### Commit Message Format
 ```
@@ -77,11 +80,23 @@ src/
 - **Mobile compatibility** on real devices
 - **Cross-browser support** (Chrome, Firefox, Safari)
 - **Touch interactions** for mobile interface
+- **Visual regression** using Maestro MCP screenshots
+- **Audio synthesis** quality and consistency
+- **Pattern loop** timing and musical coherence
 
 ### Testing Tools
 - Jest for unit tests
 - Playwright for E2E testing
+- Maestro MCP for visual validation
+- Tone.js test utilities for audio testing
 - Manual testing on iOS/Android devices
+
+### Automated Testing Pipeline
+- **Pre-commit hooks** for linting and type checking
+- **Visual testing** on every UI change
+- **Audio testing** for timing consistency
+- **Cross-browser** compatibility checks
+- **Performance benchmarks** for audio latency
 
 ## Build & Deployment
 
@@ -89,12 +104,19 @@ src/
 - `npm run dev` - local development server
 - `npm run build` - production build with size checks
 - `npm run lint` - ESLint + TypeScript checks
+- `npm run test` - run all test suites
+- `npm run test:audio` - audio-specific tests
+- `npm run test:visual` - visual regression tests
 
 ### Quality Gates
 1. TypeScript compilation with no errors
 2. ESLint passes with no warnings
-3. Build size under limits
-4. Manual audio testing
+3. All tests pass (unit, integration, E2E)
+4. Visual regression tests pass
+5. Audio timing tests pass
+6. Build size under limits
+7. Performance benchmarks met
+8. Manual audio testing on target devices
 
 ## Audio Architecture Guidelines
 

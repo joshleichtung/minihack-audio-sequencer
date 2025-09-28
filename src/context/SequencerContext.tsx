@@ -10,8 +10,9 @@ interface DrumPattern {
   id: string
   name: string
   genre: string
-  pattern: number[][]  // [kick, snare, hihat, openhat] x 16 steps (0 or 1)
+  pattern: number[][]  // [kick, snare, hihat, openhat] x N steps (0 or 1), supports 16, 32, etc.
   kit: string
+  length: number  // Pattern length in steps
 }
 
 interface SequencerContextType {
@@ -64,13 +65,13 @@ export const useSequencer = () => {
 export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize 16x16 grid
   const initGrid = () => Array(16).fill(null).map(() =>
-    Array(16).fill(null).map(() => ({ active: false, velocity: 0.8 }))
+    Array(16).fill(null).map(() => ({ active: false, velocity: 0.7 }))
   )
 
   const [grid, setGrid] = useState<Cell[][]>(initGrid)
   const gridRef = useRef<Cell[][]>(initGrid())
   const [isPlaying, setIsPlaying] = useState(false)
-  const [tempo, setTempo] = useState(120)
+  const [tempo, setTempo] = useState(90)
   const [currentStep, setCurrentStep] = useState(0)
 
   const [synthParams, setSynthParams] = useState({
@@ -110,104 +111,117 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Drum patterns database
   const drumPatterns: DrumPattern[] = [
     // Hip Hop
-    { id: 'hiphop1', name: 'BOOM BAP', genre: 'Hip Hop', kit: 'classic', pattern: [
+    { id: 'hiphop1', name: 'BOOM BAP', genre: 'Hip Hop', kit: 'classic', length: 16, pattern: [
       [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
       [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
     ]},
-    { id: 'hiphop2', name: 'TRAP', genre: 'Hip Hop', kit: 'modern', pattern: [
+    { id: 'hiphop2', name: 'TRAP', genre: 'Hip Hop', kit: 'modern', length: 16, pattern: [
       [1,0,0,1,0,0,1,0,1,0,0,1,0,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0], // snare
       [1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'hiphop3', name: 'DRILL', genre: 'Hip Hop', kit: 'hard', pattern: [
+    { id: 'hiphop3', name: 'DRILL', genre: 'Hip Hop', kit: 'hard', length: 16, pattern: [
       [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'hiphop4', name: 'LOFI', genre: 'Hip Hop', kit: 'vintage', pattern: [
+    { id: 'hiphop4', name: 'LOFI', genre: 'Hip Hop', kit: 'vintage', length: 16, pattern: [
       [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]  // openhat
     ]},
     // Jazz
-    { id: 'jazz1', name: 'SWING', genre: 'Jazz', kit: 'jazz', pattern: [
+    { id: 'jazz1', name: 'SWING', genre: 'Jazz', kit: 'jazz', length: 16, pattern: [
       [1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0], // kick
       [0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0], // snare
       [1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0], // hihat
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]  // openhat
     ]},
-    { id: 'jazz2', name: 'BEBOP', genre: 'Jazz', kit: 'vintage', pattern: [
+    { id: 'jazz2', name: 'BEBOP', genre: 'Jazz', kit: 'vintage', length: 16, pattern: [
       [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0], // kick
       [0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0], // snare
       [1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1], // hihat
       [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0]  // openhat
     ]},
-    { id: 'jazz3', name: 'LATIN', genre: 'Jazz', kit: 'latin', pattern: [
+    { id: 'jazz3', name: 'LATIN', genre: 'Jazz', kit: 'latin', length: 16, pattern: [
       [1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0], // kick
       [0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], // snare
       [1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'jazz4', name: 'FUSION', genre: 'Jazz', kit: 'modern', pattern: [
+    { id: 'jazz4', name: 'FUSION', genre: 'Jazz', kit: 'modern', length: 16, pattern: [
       [1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,1], // kick
       [0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0], // snare
       [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
       [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
     ]},
     // Drum & Bass
-    { id: 'dnb1', name: 'AMEN', genre: 'D&B', kit: 'electronic', pattern: [
+    { id: 'dnb1', name: 'AMEN', genre: 'D&B', kit: 'electronic', length: 16, pattern: [
       [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0], // kick
       [0,0,1,0,1,0,0,1,0,1,0,0,1,0,0,1], // snare
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'dnb2', name: 'NEUROFUNK', genre: 'D&B', kit: 'dark', pattern: [
+    { id: 'dnb2', name: 'NEUROFUNK', genre: 'D&B', kit: 'dark', length: 16, pattern: [
       [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0], // hihat
       [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
     ]},
-    { id: 'dnb3', name: 'LIQUID', genre: 'D&B', kit: 'smooth', pattern: [
+    { id: 'dnb3', name: 'LIQUID', genre: 'D&B', kit: 'smooth', length: 16, pattern: [
       [1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]  // openhat
     ]},
-    { id: 'dnb4', name: 'JUNGLE', genre: 'D&B', kit: 'classic', pattern: [
+    { id: 'dnb4', name: 'JUNGLE', genre: 'D&B', kit: 'classic', length: 16, pattern: [
       [1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1], // kick
       [0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0], // snare
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
     // Additional styles
-    { id: 'house1', name: 'FOUR-ON-FLOOR', genre: 'House', kit: 'electronic', pattern: [
+    { id: 'house1', name: 'FOUR-ON-FLOOR', genre: 'House', kit: 'electronic', length: 16, pattern: [
       [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], // snare
       [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], // hihat
       [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1]  // openhat
     ]},
-    { id: 'breakbeat1', name: 'FUNKY BREAKS', genre: 'Breaks', kit: 'funk', pattern: [
+    { id: 'breakbeat1', name: 'FUNKY BREAKS', genre: 'Breaks', kit: 'funk', length: 16, pattern: [
       [1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], // kick
       [0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0], // snare
       [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], // hihat
       [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'rock1', name: 'ROCK STEADY', genre: 'Rock', kit: 'rock', pattern: [
+    { id: 'rock1', name: 'ROCK STEADY', genre: 'Rock', kit: 'rock', length: 16, pattern: [
       [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], // kick
       [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], // snare
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // hihat
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]  // openhat
     ]},
-    { id: 'afrobeat1', name: 'AFROBEAT', genre: 'World', kit: 'world', pattern: [
+    { id: 'afrobeat1', name: 'AFROBEAT', genre: 'World', kit: 'world', length: 16, pattern: [
       [1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,0], // kick
       [0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], // snare
       [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0], // hihat
       [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]  // openhat
+    ]},
+    // 32-step patterns to demonstrate extended functionality
+    { id: 'extended32_1', name: 'PROGRESSIVE HOUSE 32', genre: 'House', kit: 'electronic', length: 32, pattern: [
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,1,0], // kick - varies in second half
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,1], // snare - more complex in second half
+      [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,0], // hihat - different pattern second half
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0]  // openhat - sparse accents
+    ]},
+    { id: 'extended32_2', name: 'EVOLVING TECHNO 32', genre: 'Techno', kit: 'electronic', length: 32, pattern: [
+      [1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,1], // kick - builds intensity
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,1,0,1,0], // snare - more hits in second half
+      [1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,0,1,1,1,0,1,1,1], // hihat - continuous with gaps
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1]  // openhat - only in second half
     ]}
   ]
 
@@ -438,25 +452,25 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const currentCell = newGrid[row][col]
 
     if (shiftKey) {
-      // Shift-click: toggle between off and 0.8 velocity
-      newGrid[row][col] = {
-        active: !currentCell.active,
-        velocity: 0.8
-      }
-    } else {
-      // Regular click: cycle through velocity states
+      // Shift-click: cycle through velocity states
       if (!currentCell.active) {
-        // Off -> Normal (0.8)
-        newGrid[row][col] = { active: true, velocity: 0.8 }
-      } else if (currentCell.velocity === 0.8) {
+        // Off -> Normal (0.7)
+        newGrid[row][col] = { active: true, velocity: 0.7 }
+      } else if (currentCell.velocity === 0.7) {
         // Normal -> Emphasis (1.0)
         newGrid[row][col] = { active: true, velocity: 1.0 }
       } else if (currentCell.velocity === 1.0) {
-        // Emphasis -> Quiet (0.5)
-        newGrid[row][col] = { active: true, velocity: 0.5 }
+        // Emphasis -> Quiet (0.3)
+        newGrid[row][col] = { active: true, velocity: 0.3 }
       } else {
         // Quiet -> Off
-        newGrid[row][col] = { active: false, velocity: 0.8 }
+        newGrid[row][col] = { active: false, velocity: 0.7 }
+      }
+    } else {
+      // Regular click: toggle between off and normal velocity
+      newGrid[row][col] = {
+        active: !currentCell.active,
+        velocity: 0.7
       }
     }
 
@@ -516,7 +530,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               const drumNames = ['kick', 'snare', 'hihat', 'openhat']
 
               drumNames.forEach((drumName, drumIndex) => {
-                if (currentPattern.pattern[drumIndex][step] === 1) {
+                const patternStep = step % currentPattern.length
+                if (currentPattern.pattern[drumIndex][patternStep] === 1) {
                   const synth = drumSynthsRef.current[drumName]
                   if (synth) {
                     synth.triggerAttackRelease('16n', time)

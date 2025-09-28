@@ -171,7 +171,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // Advance to next step
-      const secondsPerStep = 60.0 / (tempo * 4) // 16th notes
+      const secondsPerStep = 60.0 / tempo // Each step = 1 beat (not 16th notes)
       nextStepTimeRef.current += secondsPerStep
       currentStepRef.current = (currentStepRef.current + 1) % 16
     }

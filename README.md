@@ -60,6 +60,156 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Run linting and quality checks
+npm run lint
+
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:audio      # Audio timing tests
+npm run test:visual     # Visual regression tests
+npm run test:ui         # Interactive UI tests
+npm run test:headed     # Run tests with browser visible
+npm run test:debug      # Debug mode for tests
+```
+
+## ⚙️ Implementation Options
+
+### Timing Engine Architectures
+
+The app supports two distinct timing implementations that can be toggled in development:
+
+#### **1. Tone.Sequence Implementation** (Default)
+- **File**: `src/context/SequencerContext.tsx`
+- **Approach**: Uses Tone.js built-in Sequence scheduler
+- **Timing**: `'4n'` (quarter notes) - each step = 1 beat
+- **Precision**: Relies on Tone.js internal timing
+- **Benefits**: Simple, reliable, well-tested
+- **Use Cases**: Standard musical applications
+
+#### **2. Lookahead Scheduling Implementation** (Advanced)
+- **File**: `src/context/SequencerContextImproved.tsx`
+- **Approach**: Manual lookahead scheduling with 25ms precision
+- **Timing**: `60.0 / tempo` seconds per step
+- **Precision**: Custom timing engine with drift correction
+- **Benefits**: Maximum timing accuracy, custom control
+- **Use Cases**: Professional audio applications, timing-critical scenarios
+
+### Switching Between Implementations
+
+**For Development Testing:**
+```typescript
+// In src/main.tsx, toggle between:
+import App from './App.tsx'                    // Uses Tone.Sequence
+import AppWithTimingToggle from './AppWithTimingToggle.tsx'  // Runtime toggle
+
+// AppWithTimingToggle provides UI toggle button for A/B testing
+```
+
+**For Production:**
+- Choose implementation based on requirements
+- Default: Tone.Sequence (more stable)
+- Advanced: Lookahead (maximum precision)
+
+### Audio Architecture Details
+
+#### **Timing Precision Specifications**
+- **Target Loop Time**: 6.857 seconds (16 beats @ 140 BPM)
+- **Acceptable Drift**: <500ms over 10 loops (verified via E2E tests)
+- **Step Precision**: ±10ms visual sync offset
+- **Browser Compatibility**: Chrome (best), Firefox, Safari, Mobile
+
+#### **Quality Gates**
+1. **Syntax**: ESLint + TypeScript strict mode
+2. **Performance**: Core Web Vitals compliance
+3. **Accessibility**: WCAG 2.1 AA (44px touch targets)
+4. **Audio Timing**: <500ms drift over 10 loops
+5. **Security**: Dependency vulnerability scanning
+6. **Browser Testing**: Cross-platform E2E validation
+
+## 🧪 Testing
+
+### Test Suites
+
+#### **Audio Timing Tests** (`tests/e2e/audio-timing.spec.ts`)
+Validates timing precision across browsers:
+- **BPM Consistency**: ±50ms variance at 120 BPM
+- **Drum Loop Precision**: No timing drift over multiple loops
+- **Accumulation Errors**: <500ms drift over 10 complete loops
+- **Cross-Browser**: Chrome, Firefox, Safari, Mobile
+
+#### **Visual Regression Tests**
+UI consistency and accessibility:
+- Component rendering across viewport sizes
+- LCARS theme consistency
+- Mobile touch target compliance (44px minimum)
+- Position indicator animation accuracy
+
+#### **Interactive UI Tests**
+User workflow validation:
+- Grid cell activation/deactivation
+- Transport controls (play/stop/spacebar)
+- Synth parameter changes
+- Effect control responsiveness
+- Preset pattern loading
+
+### Running Tests
+
+```bash
+# Quick test run (essential tests only)
+npm test
+
+# Full test suite with timing validation
+npm run test:audio
+
+# Visual testing with browser visible
+npm run test:headed
+
+# Debug specific test failures
+npm run test:debug
+
+# Run tests for specific browser
+npx playwright test --project=chromium
+npx playwright test --project=firefox
+npx playwright test --project=webkit
+```
+
+### Troubleshooting Tests
+
+#### **Timing Test Failures**
+- **Issue**: >500ms drift over 10 loops
+- **Cause**: Browser audio context precision, system load
+- **Solution**: Run on dedicated test machine, check implementation choice
+
+#### **Mobile Accessibility Failures**
+- **Issue**: Grid cells not clickable on mobile
+- **Cause**: Touch target size <44px, visibility issues
+- **Solution**: Verify CSS grid layout, check component styling
+
+#### **Cross-Browser Inconsistencies**
+- **Issue**: Tests pass in Chrome, fail in Safari/Firefox
+- **Cause**: Web Audio API implementation differences
+- **Solution**: Browser-specific timing adjustments may be needed
+
+### Development Workflow
+
+```bash
+# 1. Start development
+npm run dev
+
+# 2. Make changes, run relevant tests
+npm run test:audio        # After timing changes
+npm run lint              # After code changes
+
+# 3. Full validation before commit
+npm test && npm run lint
+
+# 4. Manual testing
+# - Load http://localhost:5173
+# - Test audio playback, timing, interactions
+# - Verify mobile responsiveness
 ```
 
 ## 🎵 Musical Features

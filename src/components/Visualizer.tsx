@@ -5,7 +5,7 @@ interface VisualizerProps {
   side: 'left' | 'right'
 }
 
-const Visualizer = ({ side }: VisualizerProps) => {
+const Visualizer = ({ side }: VisualizerProps): JSX.Element => {
   const { isPlaying, currentStep, synthParams } = useSequencer()
   const [bars, setBars] = useState<number[]>([])
 
@@ -29,7 +29,7 @@ const Visualizer = ({ side }: VisualizerProps) => {
     setBars(newBars)
   }, [currentStep, isPlaying, side, synthParams.brightness, synthParams.texture])
 
-  const getBarColor = (height: number) => {
+  const getBarColor = (height: number): string => {
     if (height < 20) return 'bg-gray-800'
     if (height < 40) return 'bg-lcars-blue'
     if (height < 70) return 'bg-lcars-purple'

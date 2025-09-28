@@ -1,101 +1,172 @@
 import { useSequencer } from '../context/SequencerContext'
 import { useEffect, useState } from 'react'
 
-const Grid = () => {
-  const { grid, toggleCell, currentStep } = useSequencer()
+type CellData = { active: boolean; velocity: number }
+
+const getVelocityColor = (cell: CellData): string => {
+  if (!cell.active) return 'bg-gray-700 hover:bg-gray-600'
+
+  if (cell.velocity === 1.0) {
+    return 'bg-red-500 shadow-lg shadow-red-500/50'
+  } else if (cell.velocity === 0.7) {
+    return 'bg-lcars-orange shadow-lg shadow-lcars-orange/50'
+  } else if (cell.velocity === 0.3) {
+    return 'bg-lcars-blue shadow-lg shadow-lcars-blue/50'
+  }
+
+  return 'bg-gray-700'
+}
+
+const getGridCellClassName = (
+  cell: CellData,
+  isCurrentStep: boolean,
+  isSparkle: boolean
+): string => {
+  const baseClasses = 'aspect-square rounded-sm transition-all duration-150 relative overflow-hidden touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] cursor-pointer border border-transparent'
+  const velocityClasses = getVelocityColor(cell)
+  const currentStepClasses = isCurrentStep ? 'ring-2 ring-lcars-yellow' : ''
+  const sparkleClasses = isSparkle ? 'animate-pulse' : ''
+
+  return [baseClasses, velocityClasses, currentStepClasses, sparkleClasses]
+    .filter(Boolean)
+    .join(' ')
+}
+
+const GridCell = ({
+  cell,
+  rowIndex,
+  colIndex,
+  isCurrentStep,
+  isSparkle,
+  onToggle,
+}: {
+  cell: CellData
+  rowIndex: number
+  colIndex: number
+  isCurrentStep: boolean
+  isSparkle: boolean
+  onToggle: (rowIndex: number, colIndex: number, shiftKey: boolean) => void
+}): JSX.Element => {
+  const cellKey = `${rowIndex}-${colIndex}`
+
+  return (
+    <button
+      key={cellKey}
+      data-testid={`grid-cell-${rowIndex}-${colIndex}`}
+      onClick={(e): void => onToggle(rowIndex, colIndex, e.shiftKey)}
+      className={getGridCellClassName(cell, isCurrentStep, isSparkle)}
+      data-testid-active={cell.active ? 'true' : 'false'}
+    >
+      {isSparkle && (
+        <>
+          <div className="absolute inset-0 bg-white opacity-50 animate-ping rounded-sm"></div>
+          <div className="absolute inset-0 bg-lcars-yellow opacity-30 animate-bounce rounded-sm"></div>
+        </>
+      )}
+    </button>
+  )
+}
+
+const VelocityLegend = (): JSX.Element => (
+  <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-300">
+    <div className="flex items-center gap-1">
+      <div className="w-3 h-3 bg-lcars-orange rounded-sm"></div>
+      <span>NORMAL</span>
+    </div>
+    <div className="flex items-center gap-1">
+      <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+      <span>EMPHASIS</span>
+    </div>
+    <div className="flex items-center gap-1">
+      <div className="w-3 h-3 bg-lcars-blue rounded-sm"></div>
+      <span>QUIET</span>
+    </div>
+    <div className="sm:ml-auto text-gray-400 text-xs">
+      SHIFT+CLICK TO TOGGLE
+    </div>
+  </div>
+)
+
+const useSparkleEffect = (grid: CellData[][], currentStep: number | undefined): Set<string> => {
   const [sparkleSquares, setSparkleSquares] = useState<Set<string>>(new Set())
 
-  // Trigger sparkle animation for active squares when step changes
-  useEffect(() => {
+  useEffect((): (() => void) | void => {
     if (currentStep !== undefined) {
       const activeSquares = new Set<string>()
-      grid.forEach((row, rowIndex) => {
-        if (row[currentStep]?.active) {
-          activeSquares.add(`${rowIndex}-${currentStep}`)
+
+      grid.forEach((row, rowIndex): void => {
+        const stepIndex = currentStep
+        if (stepIndex >= 0 && stepIndex < row.length) {
+          const currentCell = row.at(stepIndex)
+          if (currentCell?.active) {
+            activeSquares.add(`${rowIndex}-${stepIndex}`)
+          }
         }
       })
 
       setSparkleSquares(activeSquares)
 
-      // Clear sparkles after animation
       if (activeSquares.size > 0) {
-        const timeout = setTimeout(() => {
+        const timeout = setTimeout((): void => {
           setSparkleSquares(new Set())
         }, 200)
-        return () => clearTimeout(timeout)
+        return (): void => clearTimeout(timeout)
       }
     }
   }, [currentStep, grid])
 
-  const getVelocityColor = (cell: { active: boolean; velocity: number }) => {
-    if (!cell.active) return 'bg-gray-700 hover:bg-gray-600'
+  return sparkleSquares
+}
 
-    if (cell.velocity === 1.0) {
-      // Emphasis - bright red
-      return 'bg-red-500 shadow-lg shadow-red-500/50'
-    } else if (cell.velocity === 0.8) {
-      // Normal - orange
-      return 'bg-lcars-orange shadow-lg shadow-lcars-orange/50'
-    } else if (cell.velocity === 0.5) {
-      // Quiet - blue/purple
-      return 'bg-lcars-blue shadow-lg shadow-lcars-blue/50'
-    }
+const renderGridCells = (
+  grid: CellData[][],
+  sparkleSquares: Set<string>,
+  currentStep: number | undefined,
+  toggleCell: (rowIndex: number, colIndex: number, shiftKey: boolean) => void
+): JSX.Element[] => {
+  return grid.map((row, rowIndex) =>
+    row.map((cell, colIndex) => {
+      const cellKey = `${rowIndex}-${colIndex}`
+      const isSparkle = sparkleSquares.has(cellKey)
+      const isCurrentStep = colIndex === currentStep
 
-    return 'bg-gray-700'
+      return (
+        <GridCell
+          key={cellKey}
+          cell={cell}
+          rowIndex={rowIndex}
+          colIndex={colIndex}
+          isCurrentStep={isCurrentStep}
+          isSparkle={isSparkle}
+          onToggle={toggleCell}
+        />
+      )
+    })
+  ).flat()
+}
+
+const Grid = (): JSX.Element => {
+  const { grid, toggleCell, currentStep } = useSequencer()
+  const sparkleSquares = useSparkleEffect(grid, currentStep)
+
+  const positionIndicatorStyle = {
+    transform: `translateX(${(currentStep ?? 0) * 6.25}%)`,
+    transition: 'transform 0.1s ease-out'
   }
 
   return (
-    <div className="bg-gray-900 p-4 rounded-lg border-2 border-lcars-blue">
-      <div className="grid grid-cols-16 gap-1 w-full max-w-2xl mx-auto aspect-square">
-        {grid.map((row, rowIndex) =>
-          row.map((cell, colIndex) => {
-            const squareKey = `${rowIndex}-${colIndex}`
-            const isSparkle = sparkleSquares.has(squareKey)
-
-            return (
-              <button
-                key={squareKey}
-                onClick={(e) => toggleCell(rowIndex, colIndex, e.shiftKey)}
-                className={`
-                  aspect-square rounded-sm transition-all duration-150 relative overflow-hidden
-                  ${getVelocityColor(cell)}
-                  ${colIndex === currentStep
-                    ? 'ring-2 ring-lcars-yellow'
-                    : ''
-                  }
-                  ${isSparkle ? 'animate-pulse' : ''}
-                `}
-              >
-                {isSparkle && (
-                  <div className="absolute inset-0 bg-white opacity-50 animate-ping rounded-sm"></div>
-                )}
-                {isSparkle && (
-                  <div className="absolute inset-0 bg-lcars-yellow opacity-30 animate-bounce rounded-sm"></div>
-                )}
-              </button>
-            )
-          })
-        )}
-      </div>
-
-      {/* Velocity Legend */}
-      <div className="mt-2 flex gap-2 text-xs text-gray-300">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-lcars-orange rounded-sm"></div>
-          <span>NORMAL</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-          <span>EMPHASIS</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-lcars-blue rounded-sm"></div>
-          <span>QUIET</span>
-        </div>
-        <div className="ml-auto text-gray-400">
-          SHIFT+CLICK TO TOGGLE
+    <div className="bg-gray-900 p-2 sm:p-4 rounded-lg border-2 border-lcars-blue" data-testid="grid">
+      <div className="relative">
+        <div
+          className="absolute top-0 w-[6.25%] h-1 bg-lcars-yellow rounded-full z-10"
+          data-testid="position-indicator"
+          style={positionIndicatorStyle}
+        />
+        <div className="grid grid-cols-16 gap-1 w-full max-w-[90vw] sm:max-w-2xl mx-auto aspect-square min-h-[720px] sm:min-h-[400px] md:min-h-[480px]">
+          {renderGridCells(grid, sparkleSquares, currentStep, toggleCell)}
         </div>
       </div>
+      <VelocityLegend />
     </div>
   )
 }

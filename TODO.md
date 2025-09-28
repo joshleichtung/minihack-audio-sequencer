@@ -18,9 +18,16 @@
 - [x] Create drum kit selection system
 - [ ] Plan for future PCM sample support (DEFERRED)
 
-## Priority 2: Cross-Platform Support
+## Priority 2: Musical Functionality Issues
 
-### 3. Responsive Layout 🔄 NEXT UP
+### 3. Fix Drum Loop Patterns 🚨 URGENT
+- [ ] Extend pattern length beyond single bar (16 steps)
+- [ ] Implement proper musical phrasing (32, 64, 128 steps)
+- [ ] Fix loop timing issues when patterns repeat
+- [ ] Add pattern length selection UI
+- [ ] Test drum loops for musical coherence
+
+### 4. Responsive Layout 🔄 NEXT UP
 - [ ] Design mobile-friendly layout strategies
 - [ ] Implement responsive grid system
 - [ ] Create touch-friendly controls

@@ -1,0 +1,444 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - heading "VIBELOOP" [level=1] [ref=e7]
+  - generic [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - heading "SYNTH EFFECTS" [level=2] [ref=e13]
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - generic [ref=e16]:
+              - generic [ref=e17]: REVERB
+              - generic [ref=e18]: 0%
+            - slider [ref=e19]: "0"
+            - generic [ref=e20]: ROOM → HALL
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - generic [ref=e23]: DELAY
+              - generic [ref=e24]: 0%
+            - slider [ref=e25]: "0"
+            - generic [ref=e26]: RHYTHMIC ECHO
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic [ref=e29]: CHORUS
+              - generic [ref=e30]: 0%
+            - slider [ref=e31]: "0"
+            - generic [ref=e32]: SUBTLE → LUSH
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]: WAH FILTER
+              - generic [ref=e36]: 0%
+            - slider [ref=e37]: "0"
+            - generic [ref=e38]: SQUELCHY SWEEP
+          - generic [ref=e39]:
+            - generic [ref=e40]: QUICK PRESETS
+            - generic [ref=e41]:
+              - button "DRY" [ref=e42] [cursor=pointer]
+              - button "SPACE" [ref=e43] [cursor=pointer]
+              - button "LUSH" [ref=e44] [cursor=pointer]
+              - button "FUNK" [ref=e45] [cursor=pointer]
+      - generic [ref=e46]:
+        - heading "SYNTH CONTROLS" [level=2] [ref=e47]
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: BRIGHTNESS
+              - generic [ref=e52]: "50"
+            - slider [ref=e53]: "50"
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: TEXTURE
+              - generic [ref=e57]: "20"
+            - slider [ref=e58]: "20"
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]: ATTACK
+              - generic [ref=e62]: 0.01s
+            - slider [ref=e63]: "1"
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - generic [ref=e66]: RELEASE
+              - generic [ref=e67]: 0.30s
+            - slider [ref=e68]: "15"
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]: VOLUME
+              - generic [ref=e72]: "-12dB"
+            - slider [ref=e73]: "-12"
+          - generic [ref=e74]:
+            - generic [ref=e75]: WAVEFORM
+            - generic [ref=e76]:
+              - button "SINE" [ref=e77] [cursor=pointer]
+              - button "SAWTOOTH" [ref=e78] [cursor=pointer]
+              - button "SQUARE" [ref=e79] [cursor=pointer]
+              - button "TRIANGLE" [ref=e80] [cursor=pointer]
+          - generic [ref=e81]:
+            - generic [ref=e82]: CHARACTER
+            - generic [ref=e83]:
+              - button "DEFAULT" [ref=e84] [cursor=pointer]
+              - button "NEBULA" [ref=e85] [cursor=pointer]
+              - button "PLASMA" [ref=e86] [cursor=pointer]
+              - button "QUANTUM" [ref=e87] [cursor=pointer]
+              - button "WARP" [ref=e88] [cursor=pointer]
+              - button "PHOTON" [ref=e89] [cursor=pointer]
+              - button "VOID" [ref=e90] [cursor=pointer]
+    - generic [ref=e106]:
+      - generic [ref=e109]:
+        - button [ref=e110] [cursor=pointer]
+        - button [active] [ref=e111] [cursor=pointer]
+        - button [ref=e112] [cursor=pointer]
+        - button [ref=e113] [cursor=pointer]
+        - button [ref=e114] [cursor=pointer]
+        - button [ref=e115] [cursor=pointer]
+        - button [ref=e116] [cursor=pointer]
+        - button [ref=e117] [cursor=pointer]
+        - button [ref=e118] [cursor=pointer]
+        - button [ref=e119] [cursor=pointer]
+        - button [ref=e120] [cursor=pointer]
+        - button [ref=e121] [cursor=pointer]
+        - button [ref=e122] [cursor=pointer]
+        - button [ref=e123] [cursor=pointer]
+        - button [ref=e124] [cursor=pointer]
+        - button [ref=e125] [cursor=pointer]
+        - button [ref=e126] [cursor=pointer]
+        - button [ref=e127] [cursor=pointer]
+        - button [ref=e128] [cursor=pointer]
+        - button [ref=e129] [cursor=pointer]
+        - button [ref=e130] [cursor=pointer]
+        - button [ref=e131] [cursor=pointer]
+        - button [ref=e132] [cursor=pointer]
+        - button [ref=e133] [cursor=pointer]
+        - button [ref=e134] [cursor=pointer]
+        - button [ref=e135] [cursor=pointer]
+        - button [ref=e136] [cursor=pointer]
+        - button [ref=e137] [cursor=pointer]
+        - button [ref=e138] [cursor=pointer]
+        - button [ref=e139] [cursor=pointer]
+        - button [ref=e140] [cursor=pointer]
+        - button [ref=e141] [cursor=pointer]
+        - button [ref=e142] [cursor=pointer]
+        - button [ref=e143] [cursor=pointer]
+        - button [ref=e144] [cursor=pointer]
+        - button [ref=e145] [cursor=pointer]
+        - button [ref=e146] [cursor=pointer]
+        - button [ref=e147] [cursor=pointer]
+        - button [ref=e148] [cursor=pointer]
+        - button [ref=e149] [cursor=pointer]
+        - button [ref=e150] [cursor=pointer]
+        - button [ref=e151] [cursor=pointer]
+        - button [ref=e152] [cursor=pointer]
+        - button [ref=e153] [cursor=pointer]
+        - button [ref=e154] [cursor=pointer]
+        - button [ref=e155] [cursor=pointer]
+        - button [ref=e156] [cursor=pointer]
+        - button [ref=e157] [cursor=pointer]
+        - button [ref=e158] [cursor=pointer]
+        - button [ref=e159] [cursor=pointer]
+        - button [ref=e160] [cursor=pointer]
+        - button [ref=e161] [cursor=pointer]
+        - button [ref=e162] [cursor=pointer]
+        - button [ref=e163] [cursor=pointer]
+        - button [ref=e164] [cursor=pointer]
+        - button [ref=e165] [cursor=pointer]
+        - button [ref=e166] [cursor=pointer]
+        - button [ref=e167] [cursor=pointer]
+        - button [ref=e168] [cursor=pointer]
+        - button [ref=e169] [cursor=pointer]
+        - button [ref=e170] [cursor=pointer]
+        - button [ref=e171] [cursor=pointer]
+        - button [ref=e172] [cursor=pointer]
+        - button [ref=e173] [cursor=pointer]
+        - button [ref=e174] [cursor=pointer]
+        - button [ref=e175] [cursor=pointer]
+        - button [ref=e176] [cursor=pointer]
+        - button [ref=e177] [cursor=pointer]
+        - button [ref=e178] [cursor=pointer]
+        - button [ref=e179] [cursor=pointer]
+        - button [ref=e180] [cursor=pointer]
+        - button [ref=e181] [cursor=pointer]
+        - button [ref=e182] [cursor=pointer]
+        - button [ref=e183] [cursor=pointer]
+        - button [ref=e184] [cursor=pointer]
+        - button [ref=e185] [cursor=pointer]
+        - button [ref=e186] [cursor=pointer]
+        - button [ref=e187] [cursor=pointer]
+        - button [ref=e188] [cursor=pointer]
+        - button [ref=e189] [cursor=pointer]
+        - button [ref=e190] [cursor=pointer]
+        - button [ref=e191] [cursor=pointer]
+        - button [ref=e192] [cursor=pointer]
+        - button [ref=e193] [cursor=pointer]
+        - button [ref=e194] [cursor=pointer]
+        - button [ref=e195] [cursor=pointer]
+        - button [ref=e196] [cursor=pointer]
+        - button [ref=e197] [cursor=pointer]
+        - button [ref=e198] [cursor=pointer]
+        - button [ref=e199] [cursor=pointer]
+        - button [ref=e200] [cursor=pointer]
+        - button [ref=e201] [cursor=pointer]
+        - button [ref=e202] [cursor=pointer]
+        - button [ref=e203] [cursor=pointer]
+        - button [ref=e204] [cursor=pointer]
+        - button [ref=e205] [cursor=pointer]
+        - button [ref=e206] [cursor=pointer]
+        - button [ref=e207] [cursor=pointer]
+        - button [ref=e208] [cursor=pointer]
+        - button [ref=e209] [cursor=pointer]
+        - button [ref=e210] [cursor=pointer]
+        - button [ref=e211] [cursor=pointer]
+        - button [ref=e212] [cursor=pointer]
+        - button [ref=e213] [cursor=pointer]
+        - button [ref=e214] [cursor=pointer]
+        - button [ref=e215] [cursor=pointer]
+        - button [ref=e216] [cursor=pointer]
+        - button [ref=e217] [cursor=pointer]
+        - button [ref=e218] [cursor=pointer]
+        - button [ref=e219] [cursor=pointer]
+        - button [ref=e220] [cursor=pointer]
+        - button [ref=e221] [cursor=pointer]
+        - button [ref=e222] [cursor=pointer]
+        - button [ref=e223] [cursor=pointer]
+        - button [ref=e224] [cursor=pointer]
+        - button [ref=e225] [cursor=pointer]
+        - button [ref=e226] [cursor=pointer]
+        - button [ref=e227] [cursor=pointer]
+        - button [ref=e228] [cursor=pointer]
+        - button [ref=e229] [cursor=pointer]
+        - button [ref=e230] [cursor=pointer]
+        - button [ref=e231] [cursor=pointer]
+        - button [ref=e232] [cursor=pointer]
+        - button [ref=e233] [cursor=pointer]
+        - button [ref=e234] [cursor=pointer]
+        - button [ref=e235] [cursor=pointer]
+        - button [ref=e236] [cursor=pointer]
+        - button [ref=e237] [cursor=pointer]
+        - button [ref=e238] [cursor=pointer]
+        - button [ref=e239] [cursor=pointer]
+        - button [ref=e240] [cursor=pointer]
+        - button [ref=e241] [cursor=pointer]
+        - button [ref=e242] [cursor=pointer]
+        - button [ref=e243] [cursor=pointer]
+        - button [ref=e244] [cursor=pointer]
+        - button [ref=e245] [cursor=pointer]
+        - button [ref=e246] [cursor=pointer]
+        - button [ref=e247] [cursor=pointer]
+        - button [ref=e248] [cursor=pointer]
+        - button [ref=e249] [cursor=pointer]
+        - button [ref=e250] [cursor=pointer]
+        - button [ref=e251] [cursor=pointer]
+        - button [ref=e252] [cursor=pointer]
+        - button [ref=e253] [cursor=pointer]
+        - button [ref=e254] [cursor=pointer]
+        - button [ref=e255] [cursor=pointer]
+        - button [ref=e256] [cursor=pointer]
+        - button [ref=e257] [cursor=pointer]
+        - button [ref=e258] [cursor=pointer]
+        - button [ref=e259] [cursor=pointer]
+        - button [ref=e260] [cursor=pointer]
+        - button [ref=e261] [cursor=pointer]
+        - button [ref=e262] [cursor=pointer]
+        - button [ref=e263] [cursor=pointer]
+        - button [ref=e264] [cursor=pointer]
+        - button [ref=e265] [cursor=pointer]
+        - button [ref=e266] [cursor=pointer]
+        - button [ref=e267] [cursor=pointer]
+        - button [ref=e268] [cursor=pointer]
+        - button [ref=e269] [cursor=pointer]
+        - button [ref=e270] [cursor=pointer]
+        - button [ref=e271] [cursor=pointer]
+        - button [ref=e272] [cursor=pointer]
+        - button [ref=e273] [cursor=pointer]
+        - button [ref=e274] [cursor=pointer]
+        - button [ref=e275] [cursor=pointer]
+        - button [ref=e276] [cursor=pointer]
+        - button [ref=e277] [cursor=pointer]
+        - button [ref=e278] [cursor=pointer]
+        - button [ref=e279] [cursor=pointer]
+        - button [ref=e280] [cursor=pointer]
+        - button [ref=e281] [cursor=pointer]
+        - button [ref=e282] [cursor=pointer]
+        - button [ref=e283] [cursor=pointer]
+        - button [ref=e284] [cursor=pointer]
+        - button [ref=e285] [cursor=pointer]
+        - button [ref=e286] [cursor=pointer]
+        - button [ref=e287] [cursor=pointer]
+        - button [ref=e288] [cursor=pointer]
+        - button [ref=e289] [cursor=pointer]
+        - button [ref=e290] [cursor=pointer]
+        - button [ref=e291] [cursor=pointer]
+        - button [ref=e292] [cursor=pointer]
+        - button [ref=e293] [cursor=pointer]
+        - button [ref=e294] [cursor=pointer]
+        - button [ref=e295] [cursor=pointer]
+        - button [ref=e296] [cursor=pointer]
+        - button [ref=e297] [cursor=pointer]
+        - button [ref=e298] [cursor=pointer]
+        - button [ref=e299] [cursor=pointer]
+        - button [ref=e300] [cursor=pointer]
+        - button [ref=e301] [cursor=pointer]
+        - button [ref=e302] [cursor=pointer]
+        - button [ref=e303] [cursor=pointer]
+        - button [ref=e304] [cursor=pointer]
+        - button [ref=e305] [cursor=pointer]
+        - button [ref=e306] [cursor=pointer]
+        - button [ref=e307] [cursor=pointer]
+        - button [ref=e308] [cursor=pointer]
+        - button [ref=e309] [cursor=pointer]
+        - button [ref=e310] [cursor=pointer]
+        - button [ref=e311] [cursor=pointer]
+        - button [ref=e312] [cursor=pointer]
+        - button [ref=e313] [cursor=pointer]
+        - button [ref=e314] [cursor=pointer]
+        - button [ref=e315] [cursor=pointer]
+        - button [ref=e316] [cursor=pointer]
+        - button [ref=e317] [cursor=pointer]
+        - button [ref=e318] [cursor=pointer]
+        - button [ref=e319] [cursor=pointer]
+        - button [ref=e320] [cursor=pointer]
+        - button [ref=e321] [cursor=pointer]
+        - button [ref=e322] [cursor=pointer]
+        - button [ref=e323] [cursor=pointer]
+        - button [ref=e324] [cursor=pointer]
+        - button [ref=e325] [cursor=pointer]
+        - button [ref=e326] [cursor=pointer]
+        - button [ref=e327] [cursor=pointer]
+        - button [ref=e328] [cursor=pointer]
+        - button [ref=e329] [cursor=pointer]
+        - button [ref=e330] [cursor=pointer]
+        - button [ref=e331] [cursor=pointer]
+        - button [ref=e332] [cursor=pointer]
+        - button [ref=e333] [cursor=pointer]
+        - button [ref=e334] [cursor=pointer]
+        - button [ref=e335] [cursor=pointer]
+        - button [ref=e336] [cursor=pointer]
+        - button [ref=e337] [cursor=pointer]
+        - button [ref=e338] [cursor=pointer]
+        - button [ref=e339] [cursor=pointer]
+        - button [ref=e340] [cursor=pointer]
+        - button [ref=e341] [cursor=pointer]
+        - button [ref=e342] [cursor=pointer]
+        - button [ref=e343] [cursor=pointer]
+        - button [ref=e344] [cursor=pointer]
+        - button [ref=e345] [cursor=pointer]
+        - button [ref=e346] [cursor=pointer]
+        - button [ref=e347] [cursor=pointer]
+        - button [ref=e348] [cursor=pointer]
+        - button [ref=e349] [cursor=pointer]
+        - button [ref=e350] [cursor=pointer]
+        - button [ref=e351] [cursor=pointer]
+        - button [ref=e352] [cursor=pointer]
+        - button [ref=e353] [cursor=pointer]
+        - button [ref=e354] [cursor=pointer]
+        - button [ref=e355] [cursor=pointer]
+        - button [ref=e356] [cursor=pointer]
+        - button [ref=e357] [cursor=pointer]
+        - button [ref=e358] [cursor=pointer]
+        - button [ref=e359] [cursor=pointer]
+        - button [ref=e360] [cursor=pointer]
+        - button [ref=e361] [cursor=pointer]
+        - button [ref=e362] [cursor=pointer]
+        - button [ref=e363] [cursor=pointer]
+        - button [ref=e364] [cursor=pointer]
+        - button [ref=e365] [cursor=pointer]
+      - generic [ref=e366]:
+        - generic [ref=e369]: NORMAL
+        - generic [ref=e372]: EMPHASIS
+        - generic [ref=e375]: QUIET
+        - generic [ref=e376]: SHIFT+CLICK TO TOGGLE
+    - generic [ref=e391]:
+      - generic [ref=e392]:
+        - heading "PRESET PATTERNS" [level=2] [ref=e393]
+        - generic [ref=e394]:
+          - button "AMBIENT" [ref=e395] [cursor=pointer]:
+            - img [ref=e396] [cursor=pointer]
+            - generic [ref=e399] [cursor=pointer]: AMBIENT
+          - button "ENERGETIC" [ref=e400] [cursor=pointer]:
+            - img [ref=e401] [cursor=pointer]
+            - generic [ref=e403] [cursor=pointer]: ENERGETIC
+          - button "CASCADE" [ref=e404] [cursor=pointer]:
+            - img [ref=e405] [cursor=pointer]
+            - generic [ref=e408] [cursor=pointer]: CASCADE
+          - button "RISE" [ref=e409] [cursor=pointer]:
+            - img [ref=e410] [cursor=pointer]
+            - generic [ref=e413] [cursor=pointer]: RISE
+      - generic [ref=e414]:
+        - heading "DRUM MACHINE" [level=2] [ref=e415]
+        - generic [ref=e416]:
+          - button "DRUMS OFF" [ref=e418] [cursor=pointer]
+          - generic [ref=e419]:
+            - generic [ref=e420]:
+              - generic [ref=e421]: DRUM VOLUME
+              - generic [ref=e422]: "-6dB"
+            - slider [disabled] [ref=e423]: "-6"
+          - generic [ref=e424]:
+            - generic [ref=e425]: PATTERN
+            - generic [ref=e426]:
+              - button "BOOM BAP Hip Hop" [disabled] [ref=e427]:
+                - generic [ref=e428]: BOOM BAP
+                - generic [ref=e429]: Hip Hop
+              - button "TRAP Hip Hop" [disabled] [ref=e430]:
+                - generic [ref=e431]: TRAP
+                - generic [ref=e432]: Hip Hop
+              - button "DRILL Hip Hop" [disabled] [ref=e433]:
+                - generic [ref=e434]: DRILL
+                - generic [ref=e435]: Hip Hop
+              - button "LOFI Hip Hop" [disabled] [ref=e436]:
+                - generic [ref=e437]: LOFI
+                - generic [ref=e438]: Hip Hop
+              - button "SWING Jazz" [disabled] [ref=e439]:
+                - generic [ref=e440]: SWING
+                - generic [ref=e441]: Jazz
+              - button "BEBOP Jazz" [disabled] [ref=e442]:
+                - generic [ref=e443]: BEBOP
+                - generic [ref=e444]: Jazz
+              - button "LATIN Jazz" [disabled] [ref=e445]:
+                - generic [ref=e446]: LATIN
+                - generic [ref=e447]: Jazz
+              - button "FUSION Jazz" [disabled] [ref=e448]:
+                - generic [ref=e449]: FUSION
+                - generic [ref=e450]: Jazz
+              - button "AMEN D&B" [disabled] [ref=e451]:
+                - generic [ref=e452]: AMEN
+                - generic [ref=e453]: D&B
+              - button "NEUROFUNK D&B" [disabled] [ref=e454]:
+                - generic [ref=e455]: NEUROFUNK
+                - generic [ref=e456]: D&B
+              - button "LIQUID D&B" [disabled] [ref=e457]:
+                - generic [ref=e458]: LIQUID
+                - generic [ref=e459]: D&B
+              - button "JUNGLE D&B" [disabled] [ref=e460]:
+                - generic [ref=e461]: JUNGLE
+                - generic [ref=e462]: D&B
+              - button "FOUR-ON-FLOOR House" [disabled] [ref=e463]:
+                - generic [ref=e464]: FOUR-ON-FLOOR
+                - generic [ref=e465]: House
+              - button "FUNKY BREAKS Breaks" [disabled] [ref=e466]:
+                - generic [ref=e467]: FUNKY BREAKS
+                - generic [ref=e468]: Breaks
+              - button "ROCK STEADY Rock" [disabled] [ref=e469]:
+                - generic [ref=e470]: ROCK STEADY
+                - generic [ref=e471]: Rock
+              - button "AFROBEAT World" [disabled] [ref=e472]:
+                - generic [ref=e473]: AFROBEAT
+                - generic [ref=e474]: World
+              - button "PROGRESSIVE HOUSE 32 House" [disabled] [ref=e475]:
+                - generic [ref=e476]: PROGRESSIVE HOUSE 32
+                - generic [ref=e477]: House
+              - button "EVOLVING TECHNO 32 Techno" [disabled] [ref=e478]:
+                - generic [ref=e479]: EVOLVING TECHNO 32
+                - generic [ref=e480]: Techno
+  - generic [ref=e483]:
+    - generic [ref=e484]:
+      - button "PLAY" [ref=e485] [cursor=pointer]:
+        - img [ref=e486] [cursor=pointer]
+        - generic [ref=e488] [cursor=pointer]: PLAY
+      - button "CLEAR" [ref=e489] [cursor=pointer]:
+        - img [ref=e490] [cursor=pointer]
+        - generic [ref=e493] [cursor=pointer]: CLEAR
+    - generic [ref=e494]:
+      - generic [ref=e495]: TEMPO
+      - slider [ref=e496]: "90"
+      - generic [ref=e497]: "90"
+```

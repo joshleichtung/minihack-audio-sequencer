@@ -19,7 +19,7 @@ export class TimingEngine {
   start(
     tempo: number,
     onStep: (step: number) => void
-  ) {
+  ): void {
     this.onStep = onStep
 
     // Reset timing
@@ -35,7 +35,7 @@ export class TimingEngine {
     Tone.Transport.start()
   }
 
-  stop() {
+  stop(): void {
     this.isRunning = false
 
     if (this.intervalId) {
@@ -50,7 +50,7 @@ export class TimingEngine {
     this.currentStep = 0
   }
 
-  private scheduler() {
+  private scheduler(): void {
     if (!this.isRunning) return
 
     // Schedule all notes that fall within the lookahead window
@@ -60,7 +60,7 @@ export class TimingEngine {
     }
   }
 
-  private scheduleStep(step: number, time: number) {
+  private scheduleStep(step: number, time: number): void {
     // Schedule UI update slightly before the audio to ensure visual sync
     const drawTime = Math.max(0, time - 0.016) // 16ms before audio (1 frame at 60fps)
 
@@ -75,13 +75,13 @@ export class TimingEngine {
     // This ensures all audio events are scheduled with proper lookahead
   }
 
-  private advanceStep() {
+  private advanceStep(): void {
     const secondsPerStep = 60.0 / (Tone.Transport.bpm.value * 4) // 16th notes
     this.nextStepTime += secondsPerStep
     this.currentStep = (this.currentStep + 1) % 16
   }
 
-  updateTempo(tempo: number) {
+  updateTempo(tempo: number): void {
     Tone.Transport.bpm.value = tempo
   }
 

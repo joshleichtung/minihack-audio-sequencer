@@ -18,7 +18,7 @@ export class MobileAudioManager {
    * Detect if we're on a mobile device that requires user interaction
    */
   isMobileDevice(): boolean {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+    const userAgent = navigator.userAgent || navigator.vendor || ''
 
     return (
       /android/i.test(userAgent) ||
@@ -61,9 +61,7 @@ export class MobileAudioManager {
       }
 
       this.isAudioUnlocked = true
-      console.log('Audio context unlocked successfully')
     } catch (error) {
-      console.error('Failed to unlock audio context:', error)
       throw error
     }
   }
@@ -78,7 +76,7 @@ export class MobileAudioManager {
 
       // Play the silent buffer
       source.start(0)
-      source.onended = () => resolve()
+      source.onended = (): void => resolve()
 
       // Fallback timeout
       setTimeout(resolve, 100)
@@ -95,7 +93,7 @@ export class MobileAudioManager {
 
     const unlockEvents = ['touchstart', 'touchend', 'mousedown', 'keydown']
 
-    const unlockHandler = async () => {
+    const unlockHandler = async (): Promise<void> => {
       try {
         await this.initializeAudio()
 
@@ -104,7 +102,7 @@ export class MobileAudioManager {
           document.removeEventListener(event, unlockHandler, true)
         })
       } catch (error) {
-        console.error('Audio unlock failed:', error)
+        // Audio unlock failed - this is expected in some cases
       }
     }
 
@@ -113,7 +111,7 @@ export class MobileAudioManager {
       document.addEventListener(event, unlockHandler, true)
     })
 
-    console.log('Mobile audio unlock listeners added')
+    // Mobile audio unlock listeners added
   }
 
   /**

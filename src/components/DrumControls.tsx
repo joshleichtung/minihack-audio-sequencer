@@ -1,6 +1,94 @@
 import { useSequencer } from '../context/SequencerContext'
 
-const DrumControls = () => {
+type DrumPattern = {
+  id: string
+  name: string
+  genre: string
+}
+
+const DrumToggleButton = ({
+  drumEnabled,
+  onToggle,
+}: {
+  drumEnabled: boolean
+  onToggle: () => void
+}): JSX.Element => (
+  <div>
+    <button
+      onClick={onToggle}
+      className={`w-full px-4 py-3 rounded font-bold text-sm min-h-[48px] touch-manipulation ${
+        drumEnabled
+          ? 'bg-lcars-orange text-black'
+          : 'bg-gray-700 text-white hover:bg-gray-600'
+      }`}
+    >
+      DRUMS {drumEnabled ? 'ON' : 'OFF'}
+    </button>
+  </div>
+)
+
+const DrumVolumeControl = ({
+  drumVolume,
+  drumEnabled,
+  onVolumeChange,
+}: {
+  drumVolume: number
+  drumEnabled: boolean
+  onVolumeChange: (volume: number) => void
+}): JSX.Element => (
+  <div>
+    <label className="text-lcars-orange text-sm flex justify-between">
+      <span>DRUM VOLUME</span>
+      <span className="text-xs">{drumVolume}dB</span>
+    </label>
+    <input
+      type="range"
+      min="-24"
+      max="0"
+      value={drumVolume}
+      onChange={(e): void => onVolumeChange(Number(e.target.value))}
+      className="w-full h-8 touch-manipulation"
+      disabled={!drumEnabled}
+    />
+  </div>
+)
+
+const DrumPatternSelector = ({
+  drumPatterns,
+  currentDrumPattern,
+  drumEnabled,
+  onPatternSelect,
+}: {
+  drumPatterns: DrumPattern[]
+  currentDrumPattern: string
+  drumEnabled: boolean
+  onPatternSelect: (patternId: string) => void
+}): JSX.Element => (
+  <div>
+    <label className="text-lcars-orange text-sm mb-2 block">PATTERN</label>
+    <div className="max-h-48 sm:max-h-64 overflow-y-auto space-y-1">
+      {drumPatterns.map((pattern) => (
+        <button
+          key={pattern.id}
+          onClick={(): void => onPatternSelect(pattern.id)}
+          disabled={!drumEnabled}
+          className={`w-full px-3 py-3 rounded text-xs text-left min-h-[48px] touch-manipulation ${
+            currentDrumPattern === pattern.id && drumEnabled
+              ? 'bg-lcars-orange text-black'
+              : drumEnabled
+              ? 'bg-gray-700 text-white hover:bg-gray-600'
+              : 'bg-gray-800 text-gray-500'
+          }`}
+        >
+          <div className="font-bold">{pattern.name}</div>
+          <div className="text-xs opacity-75">{pattern.genre}</div>
+        </button>
+      ))}
+    </div>
+  </div>
+)
+
+const DrumControls = (): JSX.Element => {
   const {
     drumEnabled,
     drumVolume,
@@ -12,64 +100,21 @@ const DrumControls = () => {
   } = useSequencer()
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-orange w-64">
-      <h2 className="text-lcars-orange font-bold mb-4">DRUM MACHINE</h2>
-
-      <div className="space-y-4">
-        {/* Drum Enable Toggle */}
-        <div>
-          <button
-            onClick={toggleDrums}
-            className={`w-full px-4 py-2 rounded font-bold text-sm ${
-              drumEnabled
-                ? 'bg-lcars-orange text-black'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
-            }`}
-          >
-            DRUMS {drumEnabled ? 'ON' : 'OFF'}
-          </button>
-        </div>
-
-        {/* Drum Volume */}
-        <div>
-          <label className="text-lcars-orange text-sm flex justify-between">
-            <span>DRUM VOLUME</span>
-            <span className="text-xs">{drumVolume}dB</span>
-          </label>
-          <input
-            type="range"
-            min="-24"
-            max="0"
-            value={drumVolume}
-            onChange={(e) => setDrumVolume(Number(e.target.value))}
-            className="w-full"
-            disabled={!drumEnabled}
-          />
-        </div>
-
-        {/* Drum Pattern Selector */}
-        <div>
-          <label className="text-lcars-orange text-sm mb-2 block">PATTERN</label>
-          <div className="max-h-48 overflow-y-auto space-y-1">
-            {drumPatterns.map((pattern) => (
-              <button
-                key={pattern.id}
-                onClick={() => selectDrumPattern(pattern.id)}
-                disabled={!drumEnabled}
-                className={`w-full px-3 py-2 rounded text-xs text-left ${
-                  currentDrumPattern === pattern.id && drumEnabled
-                    ? 'bg-lcars-orange text-black'
-                    : drumEnabled
-                    ? 'bg-gray-700 text-white hover:bg-gray-600'
-                    : 'bg-gray-800 text-gray-500'
-                }`}
-              >
-                <div className="font-bold">{pattern.name}</div>
-                <div className="text-xs opacity-75">{pattern.genre}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-orange w-full sm:w-64" data-testid="drum-controls">
+      <h2 className="text-lcars-orange font-bold mb-3 sm:mb-4 text-sm sm:text-base">DRUM MACHINE</h2>
+      <div className="space-y-3 sm:space-y-4">
+        <DrumToggleButton drumEnabled={drumEnabled} onToggle={toggleDrums} />
+        <DrumVolumeControl
+          drumVolume={drumVolume}
+          drumEnabled={drumEnabled}
+          onVolumeChange={setDrumVolume}
+        />
+        <DrumPatternSelector
+          drumPatterns={drumPatterns}
+          currentDrumPattern={currentDrumPattern}
+          drumEnabled={drumEnabled}
+          onPatternSelect={selectDrumPattern}
+        />
       </div>
     </div>
   )

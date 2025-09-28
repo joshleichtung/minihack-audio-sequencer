@@ -1,0 +1,13 @@
+build/
+dist/
+node_modules/
+coverage/
+public/
+*.min.js
+*.min.css
+package-lock.json
+yarn.lock
+.env*
+.DS_Store
+.git/
+.playwright-mcp/

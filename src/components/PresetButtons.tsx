@@ -1,7 +1,7 @@
 import { Sparkles, Zap, TrendingDown, TrendingUp } from 'lucide-react'
 import { useSequencer } from '../context/SequencerContext'
 
-const PresetButtons = () => {
+const PresetButtons = (): JSX.Element => {
   const { setPreset } = useSequencer()
 
   const presets = [
@@ -12,20 +12,20 @@ const PresetButtons = () => {
   ]
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4 border-2 border-lcars-peach">
-      <h2 className="text-lcars-peach font-bold mb-4">PRESET PATTERNS</h2>
+    <div className="bg-gray-900 rounded-lg p-3 sm:p-4 border-2 border-lcars-peach">
+      <h2 className="text-lcars-peach font-bold mb-3 sm:mb-4 text-sm sm:text-base">PRESET PATTERNS</h2>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
         {presets.map((preset) => {
           const Icon = preset.icon
           return (
             <button
               key={preset.id}
               onClick={() => setPreset(preset.id)}
-              className={`${preset.color} text-black rounded-lg px-4 py-3 flex items-center gap-2 hover:opacity-80 transition-opacity`}
+              className={`${preset.color} text-black rounded-lg px-3 sm:px-4 py-3 flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[48px] touch-manipulation justify-center`}
             >
               <Icon size={16} />
-              <span className="text-xs font-bold">{preset.name}</span>
+              <span className="text-xs sm:text-xs font-bold">{preset.name}</span>
             </button>
           )
         })}

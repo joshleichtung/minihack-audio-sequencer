@@ -6,6 +6,18 @@ export interface DrumKit {
   description: string
 }
 
+export interface DrumSynth {
+  triggerAttackRelease: (duration: string, time?: string) => void
+  dispose: () => void
+}
+
+interface DrumComponents {
+  envelopes: Tone.Envelope[]
+  oscillators: Tone.Oscillator[]
+  effects: (Tone.Filter | Tone.Distortion | Tone.Compressor | Tone.Gain)[]
+  noiseGenerators: Tone.Noise[]
+}
+
 export const DRUM_KITS: DrumKit[] = [
   { id: '808', name: 'TR-808', description: 'Classic analog drum machine sounds' },
   { id: '909', name: 'TR-909', description: 'Punchy house and techno drums' },
@@ -21,12 +33,26 @@ export class DrumSynthesizer {
     this.gainNode = gainNode
   }
 
-  setKit(kitId: string) {
+  setKit(kitId: string): void {
     this.kit = kitId
   }
 
-  // 808 KICK - Deep sub bass with pitch envelope
-  create808Kick(): any {
+  private createDrumSynth(components: DrumComponents): DrumSynth {
+    return {
+      triggerAttackRelease: (duration: string, time?: string): void => {
+        const triggerTime = time || undefined
+        components.envelopes.forEach(env => env.triggerAttackRelease(duration, triggerTime))
+      },
+      dispose: (): void => {
+        components.envelopes.forEach(env => env.dispose())
+        components.oscillators.forEach(osc => osc.dispose())
+        components.effects.forEach(effect => effect.dispose())
+        components.noiseGenerators.forEach(noise => noise.dispose())
+      }
+    }
+  }
+
+  private create808KickComponents(): DrumComponents {
     const pitchEnv = new Tone.Envelope({
       attack: 0.01,
       decay: 0.08,
@@ -45,39 +71,28 @@ export class DrumSynthesizer {
     const distortion = new Tone.Distortion(0.4)
     const lowpass = new Tone.Filter(100, 'lowpass')
     const compressor = new Tone.Compressor(-12, 4)
+    const vca = new Tone.Gain()
 
     // Connect pitch envelope to frequency
     pitchEnv.connect(osc.frequency)
 
-    // Audio chain: Osc → Distortion → Lowpass → Compressor → Gain
-    osc.chain(distortion, lowpass, compressor, this.gainNode)
-
-    // Connect amplitude envelope to compressor output
-    const vca = new Tone.Gain()
-    compressor.connect(vca)
+    // Audio chain: Osc → Distortion → Lowpass → Compressor → VCA → Gain
+    osc.chain(distortion, lowpass, compressor, vca, this.gainNode)
     ampEnv.connect(vca.gain)
-    vca.connect(this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        const triggerTime = time || undefined
-        pitchEnv.triggerAttackRelease(duration, triggerTime)
-        ampEnv.triggerAttackRelease(duration, triggerTime)
-      },
-      dispose: () => {
-        osc.dispose()
-        pitchEnv.dispose()
-        ampEnv.dispose()
-        distortion.dispose()
-        lowpass.dispose()
-        compressor.dispose()
-        vca.dispose()
-      }
+      envelopes: [pitchEnv, ampEnv],
+      oscillators: [osc],
+      effects: [distortion, lowpass, compressor, vca],
+      noiseGenerators: []
     }
   }
 
-  // 909 KICK - Punchy with click attack
-  create909Kick(): any {
+  create808Kick(): DrumSynth {
+    return this.createDrumSynth(this.create808KickComponents())
+  }
+
+  private create909KickComponents(): DrumComponents {
     // Click component (high-frequency attack)
     const clickEnv = new Tone.Envelope({
       attack: 0.001,
@@ -87,8 +102,6 @@ export class DrumSynthesizer {
     })
     const clickOsc = new Tone.Oscillator(1600, 'sine').start()
     const clickGain = new Tone.Gain(0.3)
-    clickOsc.connect(clickGain)
-    clickEnv.connect(clickGain.gain)
 
     // Body component (low-frequency thump)
     const bodyEnv = new Tone.Envelope({
@@ -99,40 +112,48 @@ export class DrumSynthesizer {
     })
     const bodyOsc = new Tone.Oscillator(60, 'sine').start()
     const bodyGain = new Tone.Gain(0.8)
-    bodyOsc.connect(bodyGain)
-    bodyEnv.connect(bodyGain.gain)
 
     // Mix and process
     const mixer = new Tone.Gain()
     const compressor = new Tone.Compressor(-8, 3)
     const lowpass = new Tone.Filter(200, 'lowpass')
 
+    // Connect audio chain
+    clickOsc.connect(clickGain)
+    clickEnv.connect(clickGain.gain)
+    bodyOsc.connect(bodyGain)
+    bodyEnv.connect(bodyGain.gain)
     clickGain.connect(mixer)
     bodyGain.connect(mixer)
     mixer.chain(compressor, lowpass, this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
+      envelopes: [clickEnv, bodyEnv],
+      oscillators: [clickOsc, bodyOsc],
+      effects: [clickGain, bodyGain, mixer, compressor, lowpass],
+      noiseGenerators: []
+    }
+  }
+
+  create909Kick(): DrumSynth {
+    const components = this.create909KickComponents()
+    return {
+      triggerAttackRelease: (duration: string, time?: string): void => {
         const triggerTime = time || undefined
-        clickEnv.triggerAttackRelease('8n', triggerTime)
-        bodyEnv.triggerAttackRelease(duration, triggerTime)
+        // Click envelope uses fixed '8n' duration, body envelope uses provided duration
+        components.envelopes[0].triggerAttackRelease('8n', triggerTime) // click
+        components.envelopes[1].triggerAttackRelease(duration, triggerTime) // body
       },
-      dispose: () => {
-        clickOsc.dispose()
-        bodyOsc.dispose()
-        clickEnv.dispose()
-        bodyEnv.dispose()
-        clickGain.dispose()
-        bodyGain.dispose()
-        mixer.dispose()
-        compressor.dispose()
-        lowpass.dispose()
+      dispose: (): void => {
+        components.envelopes.forEach(env => env.dispose())
+        components.oscillators.forEach(osc => osc.dispose())
+        components.effects.forEach(effect => effect.dispose())
+        components.noiseGenerators.forEach(noise => noise.dispose())
       }
     }
   }
 
-  // 808 SNARE - Layered noise and tone
-  create808Snare(): any {
+  private create808SnareComponents(): DrumComponents {
     // Noise component
     const noiseEnv = new Tone.Envelope({
       attack: 0.001,
@@ -142,8 +163,6 @@ export class DrumSynthesizer {
     })
     const noise = new Tone.Noise('white').start()
     const noiseGain = new Tone.Gain(0.5)
-    noise.connect(noiseGain)
-    noiseEnv.connect(noiseGain.gain)
 
     // Tone component
     const toneEnv = new Tone.Envelope({
@@ -154,8 +173,6 @@ export class DrumSynthesizer {
     })
     const toneOsc = new Tone.Oscillator(200, 'triangle').start()
     const toneGain = new Tone.Gain(0.6)
-    toneOsc.connect(toneGain)
-    toneEnv.connect(toneGain.gain)
 
     // Processing
     const mixer = new Tone.Gain()
@@ -163,32 +180,28 @@ export class DrumSynthesizer {
     bandpass.Q.value = 5
     const distortion = new Tone.Distortion(0.2)
 
+    // Connect audio chain
+    noise.connect(noiseGain)
+    noiseEnv.connect(noiseGain.gain)
+    toneOsc.connect(toneGain)
+    toneEnv.connect(toneGain.gain)
     noiseGain.connect(mixer)
     toneGain.connect(mixer)
     mixer.chain(bandpass, distortion, this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        const triggerTime = time || undefined
-        noiseEnv.triggerAttackRelease(duration, triggerTime)
-        toneEnv.triggerAttackRelease(duration, triggerTime)
-      },
-      dispose: () => {
-        noise.dispose()
-        toneOsc.dispose()
-        noiseEnv.dispose()
-        toneEnv.dispose()
-        noiseGain.dispose()
-        toneGain.dispose()
-        mixer.dispose()
-        bandpass.dispose()
-        distortion.dispose()
-      }
+      envelopes: [noiseEnv, toneEnv],
+      oscillators: [toneOsc],
+      effects: [noiseGain, toneGain, mixer, bandpass, distortion],
+      noiseGenerators: [noise]
     }
   }
 
-  // 909 SNARE - Crispy and punchy
-  create909Snare(): any {
+  create808Snare(): DrumSynth {
+    return this.createDrumSynth(this.create808SnareComponents())
+  }
+
+  private create909SnareComponents(): DrumComponents {
     // High-frequency noise burst
     const noiseEnv = new Tone.Envelope({
       attack: 0.001,
@@ -198,8 +211,6 @@ export class DrumSynthesizer {
     })
     const noise = new Tone.Noise('white').start()
     const noiseGain = new Tone.Gain(0.7)
-    noise.connect(noiseGain)
-    noiseEnv.connect(noiseGain.gain)
 
     // Fundamental tone
     const toneEnv = new Tone.Envelope({
@@ -210,40 +221,34 @@ export class DrumSynthesizer {
     })
     const toneOsc = new Tone.Oscillator(250, 'triangle').start()
     const toneGain = new Tone.Gain(0.4)
-    toneOsc.connect(toneGain)
-    toneEnv.connect(toneGain.gain)
 
     // Processing
     const mixer = new Tone.Gain()
     const highpass = new Tone.Filter(2000, 'highpass')
     const compressor = new Tone.Compressor(-10, 4)
 
+    // Connect audio chain
+    noise.connect(noiseGain)
+    noiseEnv.connect(noiseGain.gain)
+    toneOsc.connect(toneGain)
+    toneEnv.connect(toneGain.gain)
     noiseGain.connect(mixer)
     toneGain.connect(mixer)
     mixer.chain(highpass, compressor, this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        const triggerTime = time || undefined
-        noiseEnv.triggerAttackRelease(duration, triggerTime)
-        toneEnv.triggerAttackRelease(duration, triggerTime)
-      },
-      dispose: () => {
-        noise.dispose()
-        toneOsc.dispose()
-        noiseEnv.dispose()
-        toneEnv.dispose()
-        noiseGain.dispose()
-        toneGain.dispose()
-        mixer.dispose()
-        highpass.dispose()
-        compressor.dispose()
-      }
+      envelopes: [noiseEnv, toneEnv],
+      oscillators: [toneOsc],
+      effects: [noiseGain, toneGain, mixer, highpass, compressor],
+      noiseGenerators: [noise]
     }
   }
 
-  // 808 HI-HAT - Metallic and sharp
-  create808Hihat(): any {
+  create909Snare(): DrumSynth {
+    return this.createDrumSynth(this.create909SnareComponents())
+  }
+
+  private create808HihatComponents(): DrumComponents {
     const env = new Tone.Envelope({
       attack: 0.001,
       decay: 0.04,
@@ -260,6 +265,7 @@ export class DrumSynthesizer {
     const highpass = new Tone.Filter(8000, 'highpass')
     const gain = new Tone.Gain(0.3)
 
+    // Connect audio chain
     osc1.connect(mixer)
     osc2.connect(mixer)
     osc3.connect(mixer)
@@ -267,24 +273,18 @@ export class DrumSynthesizer {
     env.connect(gain.gain)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        const triggerTime = time || undefined
-        env.triggerAttackRelease(duration, triggerTime)
-      },
-      dispose: () => {
-        osc1.dispose()
-        osc2.dispose()
-        osc3.dispose()
-        env.dispose()
-        mixer.dispose()
-        highpass.dispose()
-        gain.dispose()
-      }
+      envelopes: [env],
+      oscillators: [osc1, osc2, osc3],
+      effects: [mixer, highpass, gain],
+      noiseGenerators: []
     }
   }
 
-  // 909 HI-HAT - Bright and crispy
-  create909Hihat(): any {
+  create808Hihat(): DrumSynth {
+    return this.createDrumSynth(this.create808HihatComponents())
+  }
+
+  create909Hihat(): DrumSynth {
     // Use MetalSynth for authentic metallic sound
     const metalSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 },
@@ -300,10 +300,10 @@ export class DrumSynthesizer {
     metalSynth.chain(highpass, compressor, this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
+      triggerAttackRelease: (duration: string, time?: string): void => {
         metalSynth.triggerAttackRelease('C6', duration, time)
       },
-      dispose: () => {
+      dispose: (): void => {
         metalSynth.dispose()
         highpass.dispose()
         compressor.dispose()
@@ -311,28 +311,34 @@ export class DrumSynthesizer {
     }
   }
 
-  // Create drum synth based on current kit
-  createDrumSynth(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): any {
+  createDrumSynth(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): DrumSynth | null {
     switch (this.kit) {
       case '808':
-        switch (drumType) {
-          case 'kick': return this.create808Kick()
-          case 'snare': return this.create808Snare()
-          case 'hihat': return this.create808Hihat()
-          case 'openhat': return this.create808Hihat() // Use same as hihat with longer decay
-          default: return null
-        }
+        return this.create808DrumType(drumType)
       case '909':
-        switch (drumType) {
-          case 'kick': return this.create909Kick()
-          case 'snare': return this.create909Snare()
-          case 'hihat': return this.create909Hihat()
-          case 'openhat': return this.create909Hihat() // Use same as hihat with longer decay
-          default: return null
-        }
+        return this.create909DrumType(drumType)
       default:
-        // Fallback to original implementation
         return null
+    }
+  }
+
+  private create808DrumType(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): DrumSynth | null {
+    switch (drumType) {
+      case 'kick': return this.create808Kick()
+      case 'snare': return this.create808Snare()
+      case 'hihat': return this.create808Hihat()
+      case 'openhat': return this.create808Hihat() // Use same as hihat with longer decay
+      default: return null
+    }
+  }
+
+  private create909DrumType(drumType: 'kick' | 'snare' | 'hihat' | 'openhat'): DrumSynth | null {
+    switch (drumType) {
+      case 'kick': return this.create909Kick()
+      case 'snare': return this.create909Snare()
+      case 'hihat': return this.create909Hihat()
+      case 'openhat': return this.create909Hihat() // Use same as hihat with longer decay
+      default: return null
     }
   }
 }
