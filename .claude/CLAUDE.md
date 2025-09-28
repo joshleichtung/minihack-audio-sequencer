@@ -1,11 +1,26 @@
 # VibeLoop Project - Claude Configuration
 
 ## Project Overview
-VibeLoop is a browser-based music sequencer with real-time audio synthesis, drum patterns, and visual effects. Built with React, TypeScript, Tone.js for Web Audio.
 
-## Development Workflow Rules
+VibeLoop is a browser-based music sequencer with real-time audio synthesis, drum
+patterns, and visual effects. Built with React, TypeScript, Tone.js for Web
+Audio.
+
+## Development Workflow Rules - MANDATORY ENFORCEMENT
+
+### 🚨 CRITICAL DEVELOPMENT RULES - NEVER SKIP
+
+1. **LINT BEFORE EVERY COMMIT**: Run `npm run lint` and fix ALL issues before
+   committing
+2. **COMMIT AND PUSH IMMEDIATELY**: After completing any feature/fix, commit AND
+   push to remote
+3. **NO UNCOMMITTED WORK**: Never leave working changes uncommitted at end of
+   session
+4. **VALIDATE BUILDS**: Run `npm run build` to ensure no build errors before
+   major commits
 
 ### Git Workflow - MANDATORY
+
 1. **Create feature branches** for ALL new work
 2. **Incremental commits** for each logical change
 3. **Descriptive commit messages** with context and impact
@@ -13,9 +28,30 @@ VibeLoop is a browser-based music sequencer with real-time audio synthesis, drum
 5. **Merge only with explicit approval** from project owner
 6. **Testing required** before any commit to feature branch
 7. **Quality gates** must pass before merge requests
-8. **Visual validation** using Maestro MCP for UI changes
+8. **Visual validation** using Playwright MCP for UI changes
+
+### 🔄 Development Loop - ENFORCE EVERY TIME
+
+```bash
+# 1. Start feature work
+git checkout -b feature/feature-name
+
+# 2. During development - CONTINUOUSLY
+npm run lint          # Fix any linting issues IMMEDIATELY
+npm run build         # Verify build works
+
+# 3. After ANY meaningful change - IMMEDIATELY
+git add .
+git commit -m "descriptive message"
+git push              # NEVER FORGET TO PUSH
+
+# 4. End of session - VERIFY
+git status            # Must show "working tree clean"
+git log --oneline -3  # Verify recent commits are pushed
+```
 
 ### Commit Message Format
+
 ```
 <type>: <description>
 
@@ -29,6 +65,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 Types: feat, fix, refactor, perf, docs, test, chore
 
 ### Branch Naming Convention
+
 - `feature/timing-improvements`
 - `fix/mobile-audio-issues`
 - `refactor/drum-synthesis`
@@ -37,18 +74,21 @@ Types: feat, fix, refactor, perf, docs, test, chore
 ## Code Standards
 
 ### TypeScript Requirements
+
 - **Strict mode enabled** - no `any` types without justification
 - **Explicit interfaces** for all data structures
 - **Proper error handling** with try/catch blocks
 - **Import organization** - group by: React, external libs, internal modules
 
 ### Audio Development Best Practices
+
 - **Use lookahead scheduling** for all timing-critical operations
 - **Dispose audio nodes** properly to prevent memory leaks
 - **Test on mobile devices** - iOS Safari and Android Chrome
 - **Consider WebAudio limitations** - mobile autoplay policies
 
 ### Performance Requirements
+
 - **Bundle size** < 500KB initial load
 - **Audio latency** < 50ms for user interactions
 - **60fps rendering** for visual components
@@ -57,6 +97,7 @@ Types: feat, fix, refactor, perf, docs, test, chore
 ## File Organization
 
 ### Directory Structure
+
 ```
 src/
 ├── audio/           # Audio engines and synthesis
@@ -68,6 +109,7 @@ src/
 ```
 
 ### Naming Conventions
+
 - **Components**: PascalCase (`DrumControls.tsx`)
 - **Files**: camelCase (`audioEngine.ts`)
 - **Constants**: SCREAMING_SNAKE_CASE
@@ -76,6 +118,7 @@ src/
 ## Testing Requirements
 
 ### Must Test
+
 - **Audio timing accuracy** with test harness
 - **Mobile compatibility** on real devices
 - **Cross-browser support** (Chrome, Firefox, Safari)
@@ -85,6 +128,7 @@ src/
 - **Pattern loop** timing and musical coherence
 
 ### Testing Tools
+
 - Jest for unit tests
 - Playwright for E2E testing
 - Maestro MCP for visual validation
@@ -92,6 +136,7 @@ src/
 - Manual testing on iOS/Android devices
 
 ### Automated Testing Pipeline
+
 - **Pre-commit hooks** for linting and type checking
 - **Visual testing** on every UI change
 - **Audio testing** for timing consistency
@@ -101,6 +146,7 @@ src/
 ## Build & Deployment
 
 ### Development
+
 - `npm run dev` - local development server
 - `npm run build` - production build with size checks
 - `npm run lint` - ESLint + TypeScript checks
@@ -109,6 +155,7 @@ src/
 - `npm run test:visual` - visual regression tests
 
 ### Quality Gates
+
 1. TypeScript compilation with no errors
 2. ESLint passes with no warnings
 3. All tests pass (unit, integration, E2E)
@@ -121,12 +168,14 @@ src/
 ## Audio Architecture Guidelines
 
 ### Tone.js Best Practices
+
 - **Use Transport.bpm** for tempo synchronization
 - **Implement proper scheduling** with lookahead buffers
 - **Chain effects properly** to avoid feedback loops
 - **Dispose synthesizers** in cleanup functions
 
 ### Mobile Audio Support
+
 - **Initialize on user interaction** using MobileAudioManager
 - **Test audio unlock** on iOS Safari specifically
 - **Handle autoplay restrictions** gracefully
@@ -134,12 +183,14 @@ src/
 ## Component Development
 
 ### React Patterns
+
 - **Functional components** with hooks only
 - **useCallback** for event handlers
 - **useMemo** for expensive calculations
 - **Context** for global state (audio, sequencer)
 
 ### State Management
+
 - React Context for audio state
 - Local state for UI-only interactions
 - Refs for audio nodes and timing data
@@ -147,12 +198,14 @@ src/
 ## Documentation Requirements
 
 ### Code Documentation
+
 - **JSDoc comments** for all public functions
 - **README updates** for significant features
 - **API documentation** for audio modules
 - **Technical decisions** documented in TECHNICAL_ANALYSIS.md
 
 ### User Documentation
+
 - **Feature descriptions** in README
 - **Keyboard shortcuts** documented
 - **Mobile usage notes** included
@@ -160,11 +213,13 @@ src/
 ## Performance Monitoring
 
 ### Audio Performance
+
 - Monitor audio callback execution time
 - Track Web Audio memory usage
 - Measure timing accuracy vs BPM
 
 ### UI Performance
+
 - Use React DevTools Profiler
 - Monitor render frequency
 - Optimize heavy re-renders
@@ -172,11 +227,13 @@ src/
 ## Security Considerations
 
 ### Web Audio Security
+
 - **No external audio loading** without validation
 - **Sanitize user input** for pattern data
 - **Rate limit** audio operations if needed
 
 ### Data Handling
+
 - **Local storage only** for patterns/projects
 - **No server communication** for audio data
 - **Privacy-first** design approach
@@ -184,12 +241,14 @@ src/
 ## Browser Compatibility
 
 ### Minimum Support
+
 - Chrome 80+
 - Firefox 75+
 - Safari 13+ (iOS Safari 13+)
 - Edge 80+
 
 ### Web Audio Features
+
 - AudioContext required
 - OfflineAudioContext for rendering
 - AudioWorklet preferred over ScriptProcessor
@@ -197,11 +256,13 @@ src/
 ## Mobile Considerations
 
 ### Touch Interface
+
 - **44px minimum** touch target size
 - **Gesture support** for zoom/pan on grid
 - **Responsive breakpoints** for mobile layouts
 
 ### Performance
+
 - **Reduced complexity** on mobile
 - **Battery usage optimization**
 - **Memory usage awareness**
@@ -209,17 +270,54 @@ src/
 ## Future Development Notes
 
 ### Planned Features
+
 - Real-time collaboration (WebSockets)
 - MIDI I/O support
 - Sample loading and playback
 - Audio effects expansion
 
 ### Technical Debt Tracking
+
 - Update TODO.md for major debt items
 - Document architectural decisions
 - Plan refactoring sessions
 
 ---
+
+## 🤖 Claude Code Development Reminders
+
+### BEFORE Starting Any Work
+
+```bash
+cd /Users/josh/projects/vibeloop
+git status                    # Check current state
+npm run lint                  # Verify clean starting point
+```
+
+### DURING Development - After Each Change
+
+```bash
+npm run lint                  # Fix linting issues IMMEDIATELY
+npm run build                 # Verify build integrity
+# Continue with implementation only if both pass
+```
+
+### AFTER Completing Any Feature/Change
+
+```bash
+git add .
+git commit -m "type: description"  # Descriptive commit message
+git push                           # MANDATORY - never skip push
+git status                         # Verify clean state
+```
+
+### END of Session Checklist
+
+- [ ] All changes committed and pushed
+- [ ] `git status` shows "working tree clean"
+- [ ] No linting errors: `npm run lint`
+- [ ] Build succeeds: `npm run build`
+- [ ] Development server running if continuing work
 
 ## Quick Reference Commands
 
@@ -227,8 +325,8 @@ src/
 # Start development
 npm run dev
 
-# Full build test
-npm run build && npm run lint
+# Development quality check
+npm run lint && npm run build
 
 # Create feature branch
 git checkout -b feature/your-feature-name
@@ -241,4 +339,7 @@ Detailed description of changes and impact.
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# ALWAYS push immediately
+git push
 ```
