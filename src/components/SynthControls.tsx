@@ -1,4 +1,5 @@
 import { useSequencer } from '../context/SequencerContext'
+import { SCALES, KEYS } from '../utils/scales'
 
 type SynthParam = string | number
 
@@ -146,7 +147,7 @@ const createSliderConfigs = (synthParams: SynthParams): SliderConfig[] => [
 ]
 
 const SynthControls = (): JSX.Element => {
-  const { synthParams, updateSynthParam, selectCharacter } = useSequencer()
+  const { synthParams, updateSynthParam, selectCharacter, currentScale, currentKey, setScale, setKey } = useSequencer()
   const sliderConfigs = createSliderConfigs(synthParams)
 
   return (
@@ -168,6 +169,20 @@ const SynthControls = (): JSX.Element => {
           currentValue={synthParams.character}
           onSelect={selectCharacter}
           colorClass="lcars-purple"
+        />
+        <ButtonGrid
+          label="SCALE"
+          options={SCALES.map(scale => ({ id: scale.id, name: scale.name }))}
+          currentValue={currentScale.id}
+          onSelect={setScale}
+          colorClass="lcars-blue"
+        />
+        <ButtonGrid
+          label="KEY"
+          options={KEYS.map(key => ({ id: key.id, name: key.name }))}
+          currentValue={currentKey.id}
+          onSelect={setKey}
+          colorClass="lcars-orange"
         />
       </div>
     </div>

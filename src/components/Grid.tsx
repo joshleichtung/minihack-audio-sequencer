@@ -1,5 +1,7 @@
 import { useSequencer } from '../context/SequencerContext'
 import { useEffect, useState } from 'react'
+import type { Scale, Key } from '../utils/scales'
+import { getDisplayNoteForRow } from '../utils/scales'
 
 type CellData = { active: boolean; velocity: number }
 
@@ -66,6 +68,19 @@ const GridCell = ({
     </button>
   )
 }
+
+const NoteLabels = ({ currentScale, currentKey }: { currentScale: Scale, currentKey: Key }): JSX.Element => (
+  <div className="flex flex-col justify-between h-full py-1">
+    {Array.from({ length: 16 }, (_, i) => (
+      <div
+        key={i}
+        className="flex items-center justify-center text-xs text-lcars-blue font-mono min-h-[44px] sm:min-h-[25px] w-8"
+      >
+        {getDisplayNoteForRow(i, currentScale, currentKey)}
+      </div>
+    ))}
+  </div>
+)
 
 const VelocityLegend = (): JSX.Element => (
   <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-300">
@@ -146,7 +161,7 @@ const renderGridCells = (
 }
 
 const Grid = (): JSX.Element => {
-  const { grid, toggleCell, currentStep } = useSequencer()
+  const { grid, toggleCell, currentStep, currentScale, currentKey } = useSequencer()
   const sparkleSquares = useSparkleEffect(grid, currentStep)
 
   const positionIndicatorStyle = {
@@ -156,14 +171,17 @@ const Grid = (): JSX.Element => {
 
   return (
     <div className="bg-gray-900 p-2 sm:p-4 rounded-lg border-2 border-lcars-blue" data-testid="grid">
-      <div className="relative">
-        <div
-          className="absolute top-0 w-[6.25%] h-1 bg-lcars-yellow rounded-full z-10"
-          data-testid="position-indicator"
-          style={positionIndicatorStyle}
-        />
-        <div className="grid grid-cols-16 gap-1 w-full max-w-[90vw] sm:max-w-2xl mx-auto aspect-square min-h-[720px] sm:min-h-[400px] md:min-h-[480px]">
-          {renderGridCells(grid, sparkleSquares, currentStep, toggleCell)}
+      <div className="flex gap-2">
+        <NoteLabels currentScale={currentScale} currentKey={currentKey} />
+        <div className="relative flex-1">
+          <div
+            className="absolute top-0 w-[6.25%] h-1 bg-lcars-yellow rounded-full z-10"
+            data-testid="position-indicator"
+            style={positionIndicatorStyle}
+          />
+          <div className="grid grid-cols-16 gap-1 w-full max-w-[90vw] sm:max-w-2xl mx-auto aspect-square min-h-[720px] sm:min-h-[400px] md:min-h-[480px]">
+            {renderGridCells(grid, sparkleSquares, currentStep, toggleCell)}
+          </div>
         </div>
       </div>
       <VelocityLegend />

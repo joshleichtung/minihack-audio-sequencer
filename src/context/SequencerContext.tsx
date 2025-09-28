@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
+import type { Scale, Key } from '../utils/scales'
+import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
 
 interface Cell {
   active: boolean
@@ -50,6 +52,10 @@ interface SequencerContextType {
   toggleDrums: () => void
   setDrumVolume: (volume: number) => void
   selectDrumPattern: (patternId: string) => void
+  currentScale: Scale
+  currentKey: Key
+  setScale: (scaleId: string) => void
+  setKey: (keyId: string) => void
 }
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -94,6 +100,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [drumEnabled, setDrumEnabled] = useState(false)
   const [drumVolume, setDrumVolume] = useState(-6) // dB
   const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
+
+  // Scale and key state
+  const [currentScale, setCurrentScale] = useState<Scale>(SCALES[0]) // Pentatonic
+  const [currentKey, setCurrentKey] = useState<Key>(KEYS[0]) // C
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const sequencerRef = useRef<Tone.Sequence | null>(null)
@@ -505,16 +515,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setCurrentStep(step)
           }, time)
 
-          // Play notes for this step
-          const baseNotes = ['C', 'D', 'E', 'G', 'A']
-
+          // Play notes for this step using current scale and key
           for (let row = 0; row < 16; row++) {
             const cell = gridRef.current[row][step]
             if (cell.active) {
-              const noteIndex = 15 - row
-              const octave = Math.floor(noteIndex / 5) + 2
-              const scaleIndex = noteIndex % 5
-              const note = baseNotes[scaleIndex] + octave
+              const note = getNoteForRow(row, currentScale, currentKey)
 
               if (synthRef.current) {
                 // Play each note with its individual velocity
@@ -562,59 +567,137 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentStep(0)
   }, [])
 
+  // Helper function to get scale-relative row positions
+  const getScaleRows = useCallback(() => {
+    const scaleLength = currentScale.intervals.length
+    const rows: number[] = []
+
+    // Map scale degrees to grid rows (0-15, with 15 being highest)
+    for (let i = 0; i < 16; i++) {
+      const scaleIndex = i % scaleLength
+      const octave = Math.floor(i / scaleLength)
+      const rowFromTop = 15 - i  // Invert: row 15 = highest note, row 0 = lowest
+      rows.push(rowFromTop)
+    }
+    return rows
+  }, [currentScale])
+
   const setPreset = useCallback((preset: string) => {
     const newGrid = initGrid()
+    const scaleRows = getScaleRows()
+    const scaleLength = currentScale.intervals.length
 
     switch (preset) {
       case 'ambient':
-        // Sparse pattern with long notes
-        for (let i = 0; i < 16; i += 4) {
-          newGrid[8][i].active = true
-          newGrid[10][i + 2].active = true
-          newGrid[5][i + 1].active = true
+        // Sparse pattern with perfect fifths and octaves - works great in any scale
+        // Root, fifth, octave pattern every 4 beats
+        for (let beat = 0; beat < 16; beat += 4) {
+          // Root note (scale degree 1)
+          newGrid[scaleRows[0]][beat].active = true
+          newGrid[scaleRows[0]][beat].velocity = 0.7
+
+          // Fifth (scale degree 5 if available, otherwise 4)
+          const fifthDegree = scaleLength > 4 ? 4 : 3
+          if (beat + 2 < 16) {
+            newGrid[scaleRows[fifthDegree]][beat + 2].active = true
+            newGrid[scaleRows[fifthDegree]][beat + 2].velocity = 0.3
+          }
+
+          // Octave (scale degree 8 if available)
+          if (scaleLength >= 7 && beat + 1 < 16) {
+            newGrid[scaleRows[7]][beat + 1].active = true
+            newGrid[scaleRows[7]][beat + 1].velocity = 0.3
+          }
         }
         setSynthParams(prev => ({
           ...prev,
           attack: 0.5,
-          release: 2,
-          waveform: 'sine'
+          release: 2.0,
+          waveform: 'sine',
+          brightness: 30,
+          texture: 10
         }))
         break
 
       case 'energetic':
-        // Fast pattern with octaves
+        // Fast arpeggio pattern using triads
         for (let i = 0; i < 16; i += 2) {
-          newGrid[0][i].active = true
-          newGrid[5][i].active = true
-          newGrid[10][i].active = true
-          newGrid[15][i].active = true
+          // Root chord notes every 2 beats
+          newGrid[scaleRows[0]][i].active = true  // Root
+          newGrid[scaleRows[0]][i].velocity = 1.0
+
+          if (scaleLength > 2) {
+            newGrid[scaleRows[2]][i].active = true  // Third
+            newGrid[scaleRows[2]][i].velocity = 0.7
+          }
+          if (scaleLength > 4) {
+            newGrid[scaleRows[4]][i].active = true  // Fifth
+            newGrid[scaleRows[4]][i].velocity = 0.7
+          }
+          if (scaleLength >= 7) {
+            newGrid[scaleRows[7]][i].active = true  // Octave
+            newGrid[scaleRows[7]][i].velocity = 0.7
+          }
         }
         setSynthParams(prev => ({
           ...prev,
           attack: 0.001,
-          release: 0.1,
-          waveform: 'square'
+          release: 0.2,
+          waveform: 'sawtooth',
+          brightness: 80,
+          texture: 60
         }))
         break
 
       case 'cascade':
-        // Descending pattern
-        for (let i = 0; i < 16; i++) {
-          newGrid[15 - i][i].active = true
+        // Descending scale pattern - uses all scale degrees
+        for (let i = 0; i < Math.min(16, scaleLength * 2); i++) {
+          const scaleIndex = (scaleLength * 2 - 1 - i) % scaleLength
+          const octaveOffset = Math.floor((scaleLength * 2 - 1 - i) / scaleLength) * scaleLength
+          const rowIndex = scaleRows[scaleIndex + octaveOffset] || scaleRows[scaleIndex]
+
+          if (i < 16) {
+            newGrid[rowIndex][i].active = true
+            newGrid[rowIndex][i].velocity = 0.7
+          }
         }
+        setSynthParams(prev => ({
+          ...prev,
+          attack: 0.01,
+          release: 0.5,
+          waveform: 'triangle',
+          brightness: 60,
+          texture: 40
+        }))
         break
 
       case 'rise':
-        // Ascending pattern
-        for (let i = 0; i < 16; i++) {
-          newGrid[i][i].active = true
+        // Ascending scale pattern with velocity crescendo
+        for (let i = 0; i < Math.min(16, scaleLength * 2); i++) {
+          const scaleIndex = i % scaleLength
+          const octaveOffset = Math.floor(i / scaleLength) * scaleLength
+          const rowIndex = scaleRows[scaleIndex + octaveOffset] || scaleRows[scaleIndex]
+
+          if (i < 16) {
+            newGrid[rowIndex][i].active = true
+            // Crescendo effect
+            newGrid[rowIndex][i].velocity = 0.3 + (i / 16) * 0.7
+          }
         }
+        setSynthParams(prev => ({
+          ...prev,
+          attack: 0.05,
+          release: 0.8,
+          waveform: 'square',
+          brightness: 70,
+          texture: 50
+        }))
         break
     }
 
     gridRef.current = newGrid
     setGrid(newGrid)
-  }, [])
+  }, [currentScale, getScaleRows])
 
   const updateSynthParam = useCallback((param: string, value: number | string) => {
     setSynthParams(prev => ({
@@ -675,6 +758,21 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentDrumPattern(patternId)
   }, [])
 
+  // Scale and key functions
+  const setScale = useCallback((scaleId: string) => {
+    const scale = SCALES.find(s => s.id === scaleId)
+    if (scale) {
+      setCurrentScale(scale)
+    }
+  }, [])
+
+  const setKey = useCallback((keyId: string) => {
+    const key = KEYS.find(k => k.id === keyId)
+    if (key) {
+      setCurrentKey(key)
+    }
+  }, [])
+
   return (
     <SequencerContext.Provider
       value={{
@@ -698,7 +796,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         drumPatterns,
         toggleDrums,
         setDrumVolume: setDrumVolumeCallback,
-        selectDrumPattern
+        selectDrumPattern,
+        currentScale,
+        currentKey,
+        setScale,
+        setKey
       }}
     >
       {children}
