@@ -88,9 +88,9 @@ test.describe('Octave Calculation Tests', () => {
       console.log(`Testing octave progression in ${key} key`)
 
       // Select the key
-      // eslint-disable-next-line security/detect-non-literal-regexp
       const keyButton = page
         .locator('[data-testid="synth-controls"] button')
+        // eslint-disable-next-line security/detect-non-literal-regexp
         .filter({ hasText: new RegExp('^' + key + '$') })
       await keyButton.click({ force: true })
       await page.waitForTimeout(300)

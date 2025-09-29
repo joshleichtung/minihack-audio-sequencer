@@ -727,7 +727,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Helper function to get scale-relative row positions
   const getScaleRows = useCallback(() => {
-    const scaleLength = currentScale.intervals.length
     const rows: number[] = []
 
     // Map scale degrees to grid rows (0-15, with 15 being highest)

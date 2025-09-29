@@ -1,13 +1,7 @@
 import { useSequencer } from '../context/SequencerContextImproved'
+import type { EffectSliderProps, PresetButtonProps, EffectsPresetsProps } from '../types'
 
-type EffectSliderProps = {
-  label: string
-  value: number
-  description: string
-  onChange: (value: number) => void
-}
-
-const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps): JSX.Element => (
+const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps) => (
   <div>
     <label className="text-lcars-purple text-sm flex justify-between">
       <span>{label}</span>
@@ -25,12 +19,7 @@ const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps
   </div>
 )
 
-type PresetButtonProps = {
-  name: string
-  onClick: () => void
-}
-
-const PresetButton = ({ name, onClick }: PresetButtonProps): JSX.Element => (
+const PresetButton = ({ name, onClick }: PresetButtonProps) => (
   <button
     onClick={onClick}
     className="bg-gray-700 text-white px-2 py-2 rounded text-xs hover:bg-gray-600 min-h-[48px] touch-manipulation"
@@ -39,11 +28,7 @@ const PresetButton = ({ name, onClick }: PresetButtonProps): JSX.Element => (
   </button>
 )
 
-type EffectsPresetsProps = {
-  updateEffectsParam: (param: string, value: number) => void
-}
-
-const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): JSX.Element => {
+const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps) => {
   const presets = [
     {
       name: 'DRY',
@@ -65,7 +50,7 @@ const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): JSX.Elemen
 
   const applyPreset = (values: Record<string, number>): void => {
     Object.entries(values).forEach(([param, value]) => {
-      updateEffectsParam(param, value)
+      updateEffectsParam(param as keyof import('../types').EffectParameters, value)
     })
   }
 
@@ -85,7 +70,7 @@ const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): JSX.Elemen
   )
 }
 
-const EffectsControls = (): JSX.Element => {
+const EffectsControls = () => {
   const { effectsParams, updateEffectsParam } = useSequencer()
 
   return (

@@ -1,9 +1,7 @@
+import React, { useEffect, useState } from 'react'
 import { useSequencer } from '../context/SequencerContextImproved'
-import { useEffect, useState } from 'react'
-import type { Scale, Key } from '../utils/scales'
 import { getDisplayNoteForRow } from '../utils/scales'
-
-type CellData = { active: boolean; velocity: number }
+import type { CellData, GridCellProps, NoteLabelsProps } from '../types'
 
 const getVelocityColor = (cell: CellData): string => {
   if (!cell.active) return 'bg-gray-700 hover:bg-gray-600'
@@ -16,7 +14,8 @@ const getVelocityColor = (cell: CellData): string => {
     return 'bg-lcars-blue shadow-lg shadow-lcars-blue/50'
   }
 
-  return 'bg-gray-700'
+  // Default active color for 0.8 velocity and other values
+  return 'bg-lcars-orange shadow-lg shadow-lcars-orange/50'
 }
 
 const getGridCellClassName = (
@@ -42,14 +41,7 @@ const GridCell = ({
   isCurrentStep,
   isSparkle,
   onToggle,
-}: {
-  cell: CellData
-  rowIndex: number
-  colIndex: number
-  isCurrentStep: boolean
-  isSparkle: boolean
-  onToggle: (rowIndex: number, colIndex: number, shiftKey: boolean) => void
-}): JSX.Element => {
+}: GridCellProps) => {
   const cellKey = `${rowIndex}-${colIndex}`
 
   return (
@@ -73,10 +65,7 @@ const GridCell = ({
 const NoteLabels = ({
   currentScale,
   currentKey,
-}: {
-  currentScale: Scale
-  currentKey: Key
-}): JSX.Element => (
+}: NoteLabelsProps) => (
   <div className="flex flex-col justify-between h-full py-1">
     {Array.from({ length: 16 }, (_, i) => (
       <div
@@ -89,7 +78,7 @@ const NoteLabels = ({
   </div>
 )
 
-const VelocityLegend = (): JSX.Element => (
+const VelocityLegend = () => (
   <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-300">
     <div className="flex items-center gap-1">
       <div className="w-3 h-3 bg-lcars-orange rounded-sm"></div>
@@ -143,7 +132,7 @@ const renderGridCells = (
   sparkleSquares: Set<string>,
   currentStep: number | undefined,
   toggleCell: (rowIndex: number, colIndex: number, shiftKey: boolean) => void
-): JSX.Element[] => {
+): React.JSX.Element[] => {
   return grid
     .map((row, rowIndex) =>
       row.map((cell, colIndex) => {
@@ -167,7 +156,7 @@ const renderGridCells = (
     .flat()
 }
 
-const Grid = (): JSX.Element => {
+const Grid = () => {
   const { grid, toggleCell, currentStep, currentScale, currentKey } = useSequencer()
   const sparkleSquares = useSparkleEffect(grid, currentStep)
 
@@ -191,7 +180,7 @@ const Grid = (): JSX.Element => {
             data-testid="position-indicator"
             style={positionIndicatorStyle}
           />
-          <div className="grid grid-cols-16 gap-1 w-full max-w-[90vw] sm:max-w-2xl mx-auto aspect-square min-h-[720px] sm:min-h-[400px] md:min-h-[480px]">
+          <div className="grid grid-cols-16 gap-1 w-full max-w-[85vw] lg:max-w-[480px] xl:max-w-[580px] 2xl:max-w-[700px] mx-auto aspect-square min-h-[400px] lg:min-h-[420px] xl:min-h-[480px] 2xl:min-h-[550px]">
             {renderGridCells(grid, sparkleSquares, currentStep, toggleCell)}
           </div>
         </div>

@@ -1,22 +1,11 @@
 /* eslint-disable max-lines-per-function */
 import { useSequencer } from '../context/SequencerContextImproved'
 import { SCALES, KEYS } from '../utils/scales'
-
-type SynthParam = string | number
-
-interface SynthParams {
-  brightness: number
-  texture: number
-  attack: number
-  release: number
-  volume: number
-  waveform: string
-  character: string
-}
+import type { SynthParameters } from '../types'
 
 type SliderConfig = {
   label: string
-  param: string
+  param: keyof SynthParameters
   min: number
   max: number
   value: number
@@ -30,8 +19,8 @@ const SliderControl = ({
   onUpdate,
 }: {
   config: SliderConfig
-  onUpdate: (param: string, value: SynthParam) => void
-}): JSX.Element => (
+  onUpdate: (param: keyof SynthParameters, value: string | number) => void
+}) => (
   <div>
     <label className="text-lcars-orange text-sm flex justify-between">
       <span>{config.label}</span>
@@ -64,7 +53,7 @@ const ButtonGrid = ({
   currentValue: string
   onSelect: (value: string) => void
   colorClass?: string
-}): JSX.Element => (
+}) => (
   <div>
     <label className={`text-${colorClass} text-sm`}>{label}</label>
     <div className="grid grid-cols-2 gap-2 mt-1">
@@ -102,7 +91,7 @@ const CHARACTER_PATCHES = [
 
 const WAVEFORMS = ['sine', 'sawtooth', 'square', 'triangle'] as const
 
-const createSliderConfigs = (synthParams: SynthParams): SliderConfig[] => [
+const createSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
   {
     label: 'BRIGHTNESS',
     param: 'brightness',
@@ -147,7 +136,7 @@ const createSliderConfigs = (synthParams: SynthParams): SliderConfig[] => [
   },
 ]
 
-const SynthControls = (): JSX.Element => {
+const SynthControls = () => {
   const {
     synthParams,
     updateSynthParam,
@@ -173,13 +162,13 @@ const SynthControls = (): JSX.Element => {
         ))}
         <ButtonGrid
           label="WAVEFORM"
-          options={WAVEFORMS}
+          options={[...WAVEFORMS]}
           currentValue={synthParams.waveform}
           onSelect={(value): void => updateSynthParam('waveform', value)}
         />
         <ButtonGrid
           label="CHARACTER"
-          options={CHARACTER_PATCHES}
+          options={[...CHARACTER_PATCHES]}
           currentValue={synthParams.character}
           onSelect={selectCharacter}
           colorClass="lcars-purple"

@@ -26,19 +26,19 @@ const useSpacebarToggle = (togglePlayback: () => void): void => {
   }, [togglePlayback])
 }
 
-const OldTimingApp = (): JSX.Element => {
+const OldTimingApp = () => {
   const { togglePlayback } = useSequencer()
   useSpacebarToggle(togglePlayback)
   return <AppUI />
 }
 
-const NewTimingApp = (): JSX.Element => {
+const NewTimingApp = () => {
   const { togglePlayback } = useNewSequencer()
   useSpacebarToggle(togglePlayback)
   return <AppUI />
 }
 
-const LCARSTopBar = (): JSX.Element => (
+const LCARSTopBar = () => (
   <div className="flex gap-2 mb-4">
     <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-16 flex-1 flex items-center px-8">
       <h1 className="text-black text-2xl font-bold tracking-wider">VIBELOOP</h1>
@@ -48,14 +48,14 @@ const LCARSTopBar = (): JSX.Element => (
   </div>
 )
 
-const LeftPanel = (): JSX.Element => (
+const LeftPanel = () => (
   <div className="flex gap-4 w-auto">
     <EffectsControls />
     <SynthControls />
   </div>
 )
 
-const RightPanel = (): JSX.Element => (
+const RightPanel = () => (
   <div className="flex flex-col gap-4 w-auto">
     <PresetButtons />
     <DrumControls />
@@ -63,7 +63,7 @@ const RightPanel = (): JSX.Element => (
   </div>
 )
 
-const MainContent = (): JSX.Element => (
+const MainContent = () => (
   <div className="flex gap-4">
     <LeftPanel />
     <div className="flex items-center">
@@ -79,7 +79,7 @@ const MainContent = (): JSX.Element => (
   </div>
 )
 
-const AppUI = (): JSX.Element => (
+const AppUI = () => (
   <div className="min-h-screen bg-black p-4">
     <div className="max-w-none mx-auto px-4">
       <LCARSTopBar />
@@ -97,7 +97,7 @@ const TimingToggle = ({
 }: {
   useImprovedTiming: boolean
   onToggle: () => void
-}): JSX.Element => (
+}) => (
   <div className="fixed top-4 right-4 z-50 bg-black/80 backdrop-blur p-2 rounded-lg border border-lcars-blue">
     <button
       onClick={onToggle}
@@ -117,7 +117,7 @@ const TimingToggle = ({
   </div>
 )
 
-function AppWithTimingToggle(): JSX.Element {
+function AppWithTimingToggle() {
   const [useImprovedTiming, setUseImprovedTiming] = useState(true)
 
   return (

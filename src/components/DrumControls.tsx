@@ -1,18 +1,15 @@
 import { useSequencer } from '../context/SequencerContextImproved'
-
-type DrumPattern = {
-  id: string
-  name: string
-  genre: string
-}
+import type {
+  DrumToggleButtonProps,
+  DrumVolumeControlProps,
+  DrumPatternSelectorProps,
+  DrumKitSelectorProps
+} from '../types'
 
 const DrumToggleButton = ({
   drumEnabled,
   onToggle,
-}: {
-  drumEnabled: boolean
-  onToggle: () => void
-}): JSX.Element => (
+}: DrumToggleButtonProps) => (
   <div>
     <button
       onClick={onToggle}
@@ -31,11 +28,7 @@ const DrumVolumeControl = ({
   drumVolume,
   drumEnabled,
   onVolumeChange,
-}: {
-  drumVolume: number
-  drumEnabled: boolean
-  onVolumeChange: (volume: number) => void
-}): JSX.Element => (
+}: DrumVolumeControlProps) => (
   <div>
     <label className="text-lcars-orange text-sm flex justify-between">
       <span>DRUM VOLUME</span>
@@ -58,12 +51,7 @@ const DrumPatternSelector = ({
   currentDrumPattern,
   drumEnabled,
   onPatternSelect,
-}: {
-  drumPatterns: DrumPattern[]
-  currentDrumPattern: string
-  drumEnabled: boolean
-  onPatternSelect: (patternId: string) => void
-}): JSX.Element => (
+}: DrumPatternSelectorProps) => (
   <div>
     <label className="text-lcars-orange text-sm mb-2 block">PATTERN</label>
     <div className="max-h-48 sm:max-h-64 overflow-y-auto space-y-1">
@@ -93,12 +81,7 @@ const DrumKitSelector = ({
   currentDrumKit,
   drumEnabled,
   onKitSelect,
-}: {
-  drumKits: Array<{ id: string; name: string; description: string }>
-  currentDrumKit: string
-  drumEnabled: boolean
-  onKitSelect: (kitId: string) => void
-}): JSX.Element => (
+}: DrumKitSelectorProps) => (
   <div>
     <label className="text-lcars-orange text-sm mb-2 block">DRUM KIT</label>
     <div className="grid grid-cols-2 gap-2">
@@ -123,7 +106,7 @@ const DrumKitSelector = ({
   </div>
 )
 
-const DrumControls = (): JSX.Element => {
+const DrumControls = () => {
   const {
     drumEnabled,
     drumVolume,

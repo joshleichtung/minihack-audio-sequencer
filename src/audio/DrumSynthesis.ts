@@ -1,45 +1,9 @@
 /* eslint-disable max-lines */
 import * as Tone from 'tone'
+import type { ToneDuration, ToneTime, DrumKitDefinition } from '../types'
 
-export interface DrumKit {
-  id: string
-  name: string
-  description: string
-}
-
-// Tone.js duration notation types
-export type ToneDuration =
-  | '1n'
-  | '2n'
-  | '4n'
-  | '8n'
-  | '16n'
-  | '32n'
-  | '64n' // Note values
-  | '1n.'
-  | '2n.'
-  | '4n.'
-  | '8n.'
-  | '16n.'
-  | '32n.' // Dotted notes
-  | '1t'
-  | '2t'
-  | '4t'
-  | '8t'
-  | '16t'
-  | '32t' // Triplets
-  | '1m'
-  | '2m'
-  | '4m'
-  | '8m' // Measures
-
-// Tone.js time notation types (can be duration or transport time with + prefix)
-export type ToneTime =
-  | ToneDuration
-  | `+${ToneDuration}` // Relative time (e.g., "+16n")
-  | `+${number}` // Relative seconds (e.g., "+0.5")
-  | `${number}:${number}:${number}` // Transport time (BARS:QUARTERS:SIXTEENTHS)
-  | number // Absolute time in seconds
+// Re-export for backward compatibility
+export type { ToneDuration, ToneTime } from '../types'
 
 export interface DrumSynth {
   triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => void
@@ -53,7 +17,7 @@ interface DrumComponents {
   noiseGenerators: Tone.Noise[]
 }
 
-export const DRUM_KITS: DrumKit[] = [
+export const DRUM_KITS: DrumKitDefinition[] = [
   { id: '808', name: 'TR-808', description: 'Classic analog drum machine sounds' },
   { id: '909', name: 'TR-909', description: 'Punchy house and techno drums' },
   { id: 'acoustic', name: 'Acoustic', description: 'Natural drum kit sounds' },

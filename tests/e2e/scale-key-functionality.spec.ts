@@ -97,9 +97,9 @@ test.describe('Scale and Key Functionality', () => {
 
     for (const combo of testCombinations) {
       // Select scale
-      // eslint-disable-next-line security/detect-non-literal-regexp
       const scaleButton = page
         .locator('[data-testid="synth-controls"] button')
+        // eslint-disable-next-line security/detect-non-literal-regexp
         .filter({ hasText: new RegExp('^' + combo.scale + '$') })
       await scaleButton.click({ force: true })
       await page.waitForTimeout(300)
