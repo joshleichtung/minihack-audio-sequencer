@@ -1,7 +1,12 @@
 import { useSequencer } from '../context/SequencerContextImproved'
 import type { EffectSliderProps, PresetButtonProps, EffectsPresetsProps } from '../types'
 
-const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps) => (
+const EffectSlider = ({
+  label,
+  value,
+  description,
+  onChange,
+}: EffectSliderProps): React.JSX.Element => (
   <div>
     <label className="text-lcars-purple text-sm flex justify-between">
       <span>{label}</span>
@@ -19,7 +24,7 @@ const EffectSlider = ({ label, value, description, onChange }: EffectSliderProps
   </div>
 )
 
-const PresetButton = ({ name, onClick }: PresetButtonProps) => (
+const PresetButton = ({ name, onClick }: PresetButtonProps): React.JSX.Element => (
   <button
     onClick={onClick}
     className="bg-gray-700 text-white px-2 py-2 rounded text-xs hover:bg-gray-600 min-h-[48px] touch-manipulation"
@@ -28,7 +33,7 @@ const PresetButton = ({ name, onClick }: PresetButtonProps) => (
   </button>
 )
 
-const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps) => {
+const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps): React.JSX.Element => {
   const presets = [
     {
       name: 'DRY',
@@ -70,7 +75,7 @@ const EffectsPresets = ({ updateEffectsParam }: EffectsPresetsProps) => {
   )
 }
 
-const EffectsControls = () => {
+const EffectsControls = (): React.JSX.Element => {
   const { effectsParams, updateEffectsParam } = useSequencer()
 
   return (

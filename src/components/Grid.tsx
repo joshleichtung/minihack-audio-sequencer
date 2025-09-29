@@ -41,7 +41,7 @@ const GridCell = ({
   isCurrentStep,
   isSparkle,
   onToggle,
-}: GridCellProps) => {
+}: GridCellProps): React.JSX.Element => {
   const cellKey = `${rowIndex}-${colIndex}`
 
   return (
@@ -62,10 +62,7 @@ const GridCell = ({
   )
 }
 
-const NoteLabels = ({
-  currentScale,
-  currentKey,
-}: NoteLabelsProps) => (
+const NoteLabels = ({ currentScale, currentKey }: NoteLabelsProps): React.JSX.Element => (
   <div className="flex flex-col justify-between h-full py-1">
     {Array.from({ length: 16 }, (_, i) => (
       <div
@@ -78,7 +75,7 @@ const NoteLabels = ({
   </div>
 )
 
-const VelocityLegend = () => (
+const VelocityLegend = (): React.JSX.Element => (
   <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-300">
     <div className="flex items-center gap-1">
       <div className="w-3 h-3 bg-lcars-orange rounded-sm"></div>
@@ -156,7 +153,7 @@ const renderGridCells = (
     .flat()
 }
 
-const Grid = () => {
+const Grid = (): React.JSX.Element => {
   const { grid, toggleCell, currentStep, currentScale, currentKey } = useSequencer()
   const sparkleSquares = useSparkleEffect(grid, currentStep)
 

@@ -1,7 +1,7 @@
 import { Sparkles, Zap, TrendingDown, TrendingUp } from 'lucide-react'
 import { useSequencer } from '../context/SequencerContextImproved'
 
-const PresetButtons = () => {
+const PresetButtons = (): React.JSX.Element => {
   const { setPreset } = useSequencer()
 
   const presets = [
