@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSequencer } from '../context/SequencerContextImproved'
+import type { VisualizerProps } from '../types'
 
-interface VisualizerProps {
-  side: 'left' | 'right'
-}
-
-const Visualizer = ({ side }: VisualizerProps): JSX.Element => {
+const Visualizer = ({ side }: VisualizerProps) => {
   const { isPlaying, currentStep, synthParams } = useSequencer()
   const [bars, setBars] = useState<number[]>([])
 

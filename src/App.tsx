@@ -41,7 +41,7 @@ const useIsLargeScreen = (): boolean => {
   return isLargeScreen
 }
 
-const LCARSTopBar = (): JSX.Element => (
+const LCARSTopBar = () => (
   <div className="flex gap-2 mb-2 lg:mb-3">
     <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-10 lg:h-12 flex-1 flex items-center px-3 lg:px-6">
       <h1 className="text-black text-base lg:text-xl font-bold tracking-wider">VIBELOOP</h1>
@@ -51,14 +51,14 @@ const LCARSTopBar = (): JSX.Element => (
   </div>
 )
 
-const LeftPanel = (): JSX.Element => (
+const LeftPanel = () => (
   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
     <EffectsControls />
     <SynthControls />
   </div>
 )
 
-const RightPanel = (): JSX.Element => (
+const RightPanel = () => (
   <div className="flex flex-col sm:flex-row lg:flex-col gap-2 sm:gap-4 w-full sm:w-auto">
     <PresetButtons />
     <DrumControls />
@@ -66,7 +66,7 @@ const RightPanel = (): JSX.Element => (
   </div>
 )
 
-const MainContent = (): JSX.Element => {
+const MainContent = () => {
   const isLargeScreen = useIsLargeScreen()
 
   if (isLargeScreen) {
@@ -104,7 +104,7 @@ const MainContent = (): JSX.Element => {
   )
 }
 
-const AppContent = (): JSX.Element => {
+const AppContent = () => {
   const { togglePlayback } = useSequencer()
   useSpacebarToggle(togglePlayback)
 
@@ -121,7 +121,7 @@ const AppContent = (): JSX.Element => {
   )
 }
 
-function App(): JSX.Element {
+function App() {
   return (
     <SequencerProvider>
       <AppContent />

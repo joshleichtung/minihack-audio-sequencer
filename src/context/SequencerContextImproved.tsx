@@ -5,70 +5,18 @@ import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
 import type { ToneDuration, ToneTime } from '../audio/DrumSynthesis'
 import { mobileAudioManager } from '../audio/MobileAudioFix'
 import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
-import type { Scale, Key } from '../utils/scales'
+import type {
+  Cell,
+  DrumPattern,
+  Scale,
+  Key,
+  SequencerContextType,
+  SequencerProviderProps,
+  ScheduledEvent,
+  SynthParameters,
+  EffectParameters
+} from '../types'
 
-interface Cell {
-  active: boolean
-  velocity: number
-}
-
-interface DrumPattern {
-  id: string
-  name: string
-  genre: string
-  pattern: number[][] // [kick, snare, hihat, openhat] x 16 steps (0 or 1)
-  kit: string
-}
-
-interface ScheduledEvent {
-  time: number
-  step: number
-  executed: boolean
-}
-
-interface SequencerContextType {
-  grid: Cell[][]
-  isPlaying: boolean
-  tempo: number
-  currentStep: number
-  toggleCell: (row: number, col: number, shiftKey?: boolean) => void
-  togglePlayback: () => void
-  setTempo: (tempo: number) => void
-  clearGrid: () => void
-  setPreset: (preset: string) => void
-  synthParams: {
-    brightness: number
-    texture: number
-    attack: number
-    release: number
-    volume: number
-    waveform: string
-    character: string
-  }
-  effectsParams: {
-    reverb: number
-    delay: number
-    chorus: number
-    wahFilter: number
-  }
-  updateSynthParam: (param: string, value: number | string) => void
-  updateEffectsParam: (param: string, value: number) => void
-  selectCharacter: (character: string) => void
-  drumEnabled: boolean
-  drumVolume: number
-  currentDrumPattern: string
-  currentDrumKit: string
-  drumPatterns: DrumPattern[]
-  drumKits: typeof DRUM_KITS
-  toggleDrums: () => void
-  setDrumVolume: (volume: number) => void
-  selectDrumPattern: (patternId: string) => void
-  selectDrumKit: (kitId: string) => void
-  currentScale: Scale | null
-  currentKey: Key | null
-  setScale: (scaleId: string) => void
-  setKey: (keyId: string) => void
-}
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
 
@@ -80,7 +28,7 @@ export const useSequencer = () => {
   return context
 }
 
-export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }) => {
   // Initialize 16x16 grid
   const initGrid = () =>
     Array(16)
@@ -105,7 +53,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const nextStepTimeRef = useRef(0)
   const currentStepRef = useRef(0)
 
-  const [synthParams, setSynthParams] = useState({
+  const [synthParams, setSynthParams] = useState<SynthParameters>({
     brightness: 50,
     texture: 20,
     attack: 0.01,
@@ -115,7 +63,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     character: 'default',
   })
 
-  const [effectsParams, setEffectsParams] = useState({
+  const [effectsParams, setEffectsParams] = useState<EffectParameters>({
     reverb: 0,
     delay: 0,
     chorus: 0,

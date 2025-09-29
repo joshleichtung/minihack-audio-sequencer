@@ -1,7 +1,7 @@
 import { Play, Pause, RotateCcw } from 'lucide-react'
 import { useSequencer } from '../context/SequencerContextImproved'
 
-const Transport = (): JSX.Element => {
+const Transport = () => {
   const { isPlaying, togglePlayback, tempo, setTempo, clearGrid } = useSequencer()
 
   return (

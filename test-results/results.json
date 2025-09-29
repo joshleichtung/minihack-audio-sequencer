@@ -11,11 +11,14 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 3
     },
     "preserveOutput": "always",
     "reporter": [
-      ["html", null],
+      [
+        "html",
+        null
+      ],
       [
         "json",
         {
@@ -34,13 +37,15 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 3
         },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/josh/projects/vibeloop/tests/e2e",
         "testIgnore": [],
-        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
         "timeout": 30000
       },
       {
@@ -48,13 +53,15 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 3
         },
         "id": "firefox",
         "name": "firefox",
         "testDir": "/Users/josh/projects/vibeloop/tests/e2e",
         "testIgnore": [],
-        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
         "timeout": 30000
       },
       {
@@ -62,13 +69,15 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 3
         },
         "id": "webkit",
         "name": "webkit",
         "testDir": "/Users/josh/projects/vibeloop/tests/e2e",
         "testIgnore": [],
-        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
         "timeout": 30000
       },
       {
@@ -76,13 +85,15 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 3
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "/Users/josh/projects/vibeloop/tests/e2e",
         "testIgnore": [],
-        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
         "timeout": 30000
       },
       {
@@ -90,13 +101,15 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 3
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "/Users/josh/projects/vibeloop/tests/e2e",
         "testIgnore": [],
-        "testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
         "timeout": 30000
       }
     ],
@@ -114,20 +127,20 @@
   },
   "suites": [
     {
-      "title": "grid-spacing-desktop.spec.ts",
-      "file": "grid-spacing-desktop.spec.ts",
+      "title": "grid-visual-feedback.spec.ts",
+      "file": "grid-visual-feedback.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Grid Spacing Desktop Layout",
-          "file": "grid-spacing-desktop.spec.ts",
+          "title": "Grid Visual Feedback",
+          "file": "grid-visual-feedback.spec.ts",
           "line": 3,
           "column": 6,
           "specs": [
             {
-              "title": "should investigate grid spacing at different desktop sizes",
+              "title": "should show visual feedback for normal click (toggle active/inactive)",
               "ok": true,
               "tags": [],
               "tests": [
@@ -142,49 +155,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2678,
+                      "duration": 2331,
                       "errors": [],
-                      "stdout": [
-                        {
-                          "text": "Testing Large Desktop (1920x1080)\n"
-                        },
-                        {
-                          "text": "Large Desktop Grid Styles: {\n  gap: \u001b[32m'4px'\u001b[39m,\n  gridTemplateColumns: \u001b[32m'40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px 40px'\u001b[39m,\n  width: \u001b[32m'700px'\u001b[39m,\n  height: \u001b[32m'700px'\u001b[39m,\n  maxWidth: \u001b[32m'700px'\u001b[39m,\n  aspectRatio: \u001b[32m'1 / 1'\u001b[39m\n}\n"
-                        },
-                        {
-                          "text": "Large Desktop Cell Spacing: 4px\n"
-                        },
-                        {
-                          "text": "✅ Large Desktop: 4px spacing between cells\n"
-                        },
-                        {
-                          "text": "Testing Medium Desktop (1440x900)\n"
-                        },
-                        {
-                          "text": "Medium Desktop Grid Styles: {\n  gap: \u001b[32m'4px'\u001b[39m,\n  gridTemplateColumns: \u001b[32m'26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px 26.25px'\u001b[39m,\n  width: \u001b[32m'480px'\u001b[39m,\n  height: \u001b[32m'480px'\u001b[39m,\n  maxWidth: \u001b[32m'580px'\u001b[39m,\n  aspectRatio: \u001b[32m'1 / 1'\u001b[39m\n}\n"
-                        },
-                        {
-                          "text": "Medium Desktop Cell Spacing: -1.75px\n"
-                        },
-                        {
-                          "text": "⚠️ Medium Desktop: No visible spacing between cells\n"
-                        },
-                        {
-                          "text": "Testing Small Desktop (1024x768)\n"
-                        },
-                        {
-                          "text": "Small Desktop Grid Styles: {\n  gap: \u001b[32m'4px'\u001b[39m,\n  gridTemplateColumns: \u001b[32m'22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px 22.5px'\u001b[39m,\n  width: \u001b[32m'420px'\u001b[39m,\n  height: \u001b[32m'420px'\u001b[39m,\n  maxWidth: \u001b[32m'480px'\u001b[39m,\n  aspectRatio: \u001b[32m'1 / 1'\u001b[39m\n}\n"
-                        },
-                        {
-                          "text": "Small Desktop Cell Spacing: -5.5px\n"
-                        },
-                        {
-                          "text": "⚠️ Small Desktop: No visible spacing between cells\n"
-                        }
-                      ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-29T01:42:49.346Z",
+                      "startTime": "2025-09-29T01:47:37.812Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -192,9 +168,77 @@
                   "status": "expected"
                 }
               ],
-              "id": "2b09c917fe9e2b18230f-6e483d1122d76525ccfd",
-              "file": "grid-spacing-desktop.spec.ts",
-              "line": 4,
+              "id": "80413e6d9e56ff61b11a-74d1d442e752bcf87a7f",
+              "file": "grid-visual-feedback.spec.ts",
+              "line": 11,
+              "column": 3
+            },
+            {
+              "title": "should show visual feedback for shift+click (cycle through velocities)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2873,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-29T01:47:37.799Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "80413e6d9e56ff61b11a-0235324d64d96f9e4c50",
+              "file": "grid-visual-feedback.spec.ts",
+              "line": 35,
+              "column": 3
+            },
+            {
+              "title": "should maintain visual state during playback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4406,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-29T01:47:37.802Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "80413e6d9e56ff61b11a-2a0858eaaae9c30f5418",
+              "file": "grid-visual-feedback.spec.ts",
+              "line": 68,
               "column": 3
             }
           ]
@@ -204,9 +248,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-29T01:42:49.034Z",
-    "duration": 3108.211,
-    "expected": 1,
+    "startTime": "2025-09-29T01:47:37.214Z",
+    "duration": 5565.625,
+    "expected": 3,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

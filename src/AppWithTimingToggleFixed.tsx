@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import App from './App'
 
-function AppWithTimingToggleFixed(): JSX.Element {
+function AppWithTimingToggleFixed() {
   const [useImprovedTiming, setUseImprovedTiming] = useState(true)
 
   return (

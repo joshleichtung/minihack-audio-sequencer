@@ -1,19 +1,10 @@
 /* eslint-disable security/detect-object-injection */
 // Musical scales and keys utility functions
 
-export interface Scale {
-  id: string
-  name: string
-  intervals: number[] // Semitone intervals from root
-  description: string
-}
+import type { Scale, Key } from '../types'
 
-export interface Key {
-  id: string
-  name: string
-  rootNote: string
-  pitchClass: number // 0-11 (C=0, C#=1, D=2, etc.)
-}
+// Re-export for backward compatibility
+export type { Scale, Key }
 
 // Scale definitions with semitone intervals
 export const SCALES: Scale[] = [
