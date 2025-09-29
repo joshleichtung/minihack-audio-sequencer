@@ -20,20 +20,28 @@ accidents.
 
 - **Read**: Any file in the project
 - **Edit/Write**: Source code in `src/**` and `tests/**`
+- **Write**: CI/CD workflows in `.github/**`
+- **Write**: Documentation in `docs/**`, `README.md`, `CHANGELOG.md`,
+  `CONTRIBUTING.md`
 - **Search**: Glob and Grep throughout the project
 - **Documentation**: Write analysis docs to `claudedocs/**`
 
 ### ✅ Development Commands
 
-- `npm run lint` - Check code quality
-- `npm run build` - Build the project
-- `npm run test` - Run tests
-- `npm run dev` - Start dev server
+- `npm run *` - All npm scripts (lint, build, test, dev, etc.)
+- `npm audit` - Check for security vulnerabilities
+- `npm outdated` - Check for outdated dependencies
+- `npm list` - Inspect dependency tree
 - `git status`, `git diff`, `git log`, `git branch` - Git inspection
 - `git add`, `git commit` - Local git operations
 - `git push` - Push to feature branches (main/master blocked by hook)
+- `git stash`, `git stash list`, `git stash show` - Temporary work storage
+- `git show`, `git blame`, `git reflog` - Advanced git inspection
+- `git cherry-pick` - Selective commit application
 
 ### ✅ GitHub CLI Commands
+
+**Repository & PR Management:**
 
 - `gh repo view` - View repository information
 - `gh pr create` - Create pull requests
@@ -41,11 +49,38 @@ accidents.
 - `gh pr view` - View pull request details
 - `gh pr status` - Check PR status
 - `gh pr checks` - View PR check status
+- `gh pr merge` - Merge pull requests
+- `gh pr review` - Review pull requests
 - `gh issue list` - List issues
 - `gh issue view` - View issue details
+
+**GitHub Actions & Workflows:**
+
+- `gh workflow run` - Trigger workflows manually
+- `gh workflow view` - View workflow details
+- `gh workflow list` - List all workflows
+- `gh run view` - View workflow run details
+- `gh run list` - List workflow runs
+
+**Release Management:**
+
+- `gh release create` - Create releases
+- `gh release view` - View release details
+- `gh release list` - List all releases
+
+**API Access:**
+
 - `gh api repos/:owner/:repo/branches/:branch/protection` - View branch
   protection
 - `gh api repos/:owner/:repo/rules/branches/:branch` - View repository rules
+
+### ✅ NPX Commands
+
+- `npx playwright` - Playwright operations (test, codegen, etc.)
+- `npx tsc` - TypeScript compiler
+- `npx prettier` - Code formatting
+- `npx eslint` - Linting
+- `npx *` - General npx command support
 
 ### ✅ Intelligent Tools
 
