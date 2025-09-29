@@ -42,12 +42,12 @@ const useIsLargeScreen = (): boolean => {
 }
 
 const LCARSTopBar = (): JSX.Element => (
-  <div className="flex gap-2 mb-4">
-    <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-12 sm:h-16 flex-1 flex items-center px-4 sm:px-8">
-      <h1 className="text-black text-lg sm:text-2xl font-bold tracking-wider">VIBELOOP</h1>
+  <div className="flex gap-2 mb-2 lg:mb-3">
+    <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-10 lg:h-12 flex-1 flex items-center px-3 lg:px-6">
+      <h1 className="text-black text-base lg:text-xl font-bold tracking-wider">VIBELOOP</h1>
     </div>
-    <div className="bg-lcars-purple rounded-lg w-16 sm:w-32 h-12 sm:h-16" />
-    <div className="bg-lcars-blue rounded-lg w-12 sm:w-24 h-12 sm:h-16" />
+    <div className="bg-lcars-purple rounded-lg w-12 lg:w-20 h-10 lg:h-12" />
+    <div className="bg-lcars-blue rounded-lg w-10 lg:w-16 h-10 lg:h-12" />
   </div>
 )
 
@@ -72,7 +72,7 @@ const MainContent = (): JSX.Element => {
   if (isLargeScreen) {
     // Desktop Layout
     return (
-      <div className="flex flex-row gap-4">
+      <div className="flex flex-row gap-2 lg:gap-3">
         <LeftPanel />
         <div className="flex items-center">
           <Visualizer side="left" />
@@ -109,11 +109,11 @@ const AppContent = (): JSX.Element => {
   useSpacebarToggle(togglePlayback)
 
   return (
-    <div className="min-h-screen bg-black p-2 sm:p-4">
-      <div className="max-w-none mx-auto px-2 sm:px-4">
+    <div className="min-h-screen bg-black p-2 lg:p-3">
+      <div className="max-w-none mx-auto px-2 lg:px-3">
         <LCARSTopBar />
         <MainContent />
-        <div className="mt-4">
+        <div className="mt-2 lg:mt-3">
           <Transport />
         </div>
       </div>

@@ -191,7 +191,7 @@ const Grid = (): JSX.Element => {
             data-testid="position-indicator"
             style={positionIndicatorStyle}
           />
-          <div className="grid grid-cols-16 gap-1 w-full max-w-[90vw] sm:max-w-2xl mx-auto aspect-square min-h-[720px] sm:min-h-[400px] md:min-h-[480px]">
+          <div className="grid grid-cols-16 gap-1 w-full max-w-[85vw] lg:max-w-[480px] xl:max-w-[580px] 2xl:max-w-[700px] mx-auto aspect-square min-h-[400px] lg:min-h-[420px] xl:min-h-[480px] 2xl:min-h-[550px]">
             {renderGridCells(grid, sparkleSquares, currentStep, toggleCell)}
           </div>
         </div>
