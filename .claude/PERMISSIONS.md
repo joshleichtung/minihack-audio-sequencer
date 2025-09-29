@@ -33,6 +33,7 @@ accidents.
 - `npm outdated` - Check for outdated dependencies
 - `npm list` - Inspect dependency tree
 - `git status`, `git diff`, `git log`, `git branch` - Git inspection
+- `git checkout` - Switch branches and create new branches
 - `git add`, `git commit` - Local git operations
 - `git push` - Push to feature branches (main/master blocked by hook)
 - `git stash`, `git stash list`, `git stash show` - Temporary work storage

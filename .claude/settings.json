@@ -65,6 +65,7 @@
           "git diff",
           "git log",
           "git branch",
+          "git checkout*",
           "git add",
           "git commit",
           "git push",
