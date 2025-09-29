@@ -171,24 +171,59 @@
   },
 
   "hooks": {
-    "beforeBash": {
-      "command": "echo '🔍 Running: $CLAUDE_BASH_COMMAND'",
-      "enabled": true
-    },
-    "beforeGitCommit": {
-      "command": "npm run lint",
-      "enabled": true,
-      "blockOnFailure": true
-    },
-    "beforeGitPush": {
-      "command": "git branch --show-current | grep -qE '^(main|master)$' && echo '❌ Cannot push to main/master branch directly' && exit 1 || echo '✅ Pushing to feature branch'",
-      "enabled": true,
-      "blockOnFailure": true
-    },
-    "afterNpmInstall": {
-      "command": "git diff package.json package-lock.json | tee /tmp/npm-changes.log && echo '⚠️  Review package changes in /tmp/npm-changes.log'",
-      "enabled": true
-    }
+    "PreToolUse": [
+      {
+        "matcher": {
+          "tools": ["Bash"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔍 Running: $CLAUDE_BASH_COMMAND'"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tools": ["Bash"],
+          "commandPatterns": ["git commit*"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint",
+            "blockOnFailure": true
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tools": ["Bash"],
+          "commandPatterns": ["git push*"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git branch --show-current | grep -qE '^(main|master)$' && echo '❌ Cannot push to main/master branch directly' && exit 1 || echo '✅ Pushing to feature branch'",
+            "blockOnFailure": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tools": ["Bash"],
+          "commandPatterns": ["npm install*", "npm uninstall*"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git diff package.json package-lock.json | tee /tmp/npm-changes.log && echo '⚠️  Review package changes in /tmp/npm-changes.log'"
+          }
+        ]
+      }
+    ]
   },
 
   "safetyLimits": {
