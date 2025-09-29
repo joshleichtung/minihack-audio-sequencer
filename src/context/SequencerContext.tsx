@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
 import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
-import type { ToneDuration, ToneTime } from '../types/audio'
+import type { ToneTime } from '../types/audio'
 import { mobileAudioManager } from '../audio/MobileAudioFix'
 import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
 import type {
@@ -457,108 +457,27 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
   }, [])
 
   const initializeDrumSynths = useCallback(() => {
-    if (!drumSynthesizerRef.current || !drumGainRef.current) return
+    if (!drumSynthesizerRef.current) return
 
-    // Create drum synths using fallback implementations that properly connect to track effects
-    // Note: DrumSynthesizer class connections bypass individual track effects,
-    // so we use fallback drums that connect to the correct track effects chains
-    const drumSynths = {
-      kick: createFallbackKick(),
-      snare: createFallbackSnare(),
-      hihat: createFallbackHihat(),
-      openhat: createFallbackOpenhat(),
+    // Dispose existing drums
+    if (drumSynthsRef.current) {
+      Object.values(drumSynthsRef.current).forEach(synth => {
+        if (synth && synth.dispose) synth.dispose()
+      })
     }
 
-    // Note: Drum track connections are handled in the fallback drum functions
-    // The DrumSynthesizer class connects directly to drumGainRef by design
+    // Create drum synths using DrumSynthesizer based on current kit
+    const kick = drumSynthesizerRef.current.createDrumSynth('kick')
+    const snare = drumSynthesizerRef.current.createDrumSynth('snare')
+    const hihat = drumSynthesizerRef.current.createDrumSynth('hihat')
+    const openhat = drumSynthesizerRef.current.createDrumSynth('openhat')
 
-    drumSynthsRef.current = drumSynths
+    if (!kick || !snare || !hihat || !openhat) {
+      return
+    }
+
+    drumSynthsRef.current = { kick, snare, hihat, openhat }
   }, [])
-
-  // Fallback drum implementations (simplified versions)
-  const createFallbackKick = () => {
-    const synth = new Tone.MembraneSynth()
-    // Connect to kick track effects by default
-    const kickEffects = trackEffectsRef.current.kick
-    if (kickEffects) {
-      synth.connect(kickEffects.gain)
-    }
-    return {
-      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
-        if (time !== undefined) {
-          synth.triggerAttackRelease('C1', duration, time)
-        } else {
-          synth.triggerAttackRelease('C1', duration)
-        }
-      },
-      connect: (destination: Tone.InputNode) => synth.connect(destination),
-      disconnect: () => synth.disconnect(),
-      dispose: () => synth.dispose(),
-    }
-  }
-
-  const createFallbackSnare = () => {
-    const synth = new Tone.NoiseSynth()
-    // Connect to snare track effects by default
-    const snareEffects = trackEffectsRef.current.snare
-    if (snareEffects) {
-      synth.connect(snareEffects.gain)
-    }
-    return {
-      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
-        if (time !== undefined) {
-          synth.triggerAttackRelease(duration, time)
-        } else {
-          synth.triggerAttackRelease(duration)
-        }
-      },
-      connect: (destination: Tone.InputNode) => synth.connect(destination),
-      disconnect: () => synth.disconnect(),
-      dispose: () => synth.dispose(),
-    }
-  }
-
-  const createFallbackHihat = () => {
-    const synth = new Tone.MetalSynth()
-    // Connect to hihat track effects by default
-    const hihatEffects = trackEffectsRef.current.hihat
-    if (hihatEffects) {
-      synth.connect(hihatEffects.gain)
-    }
-    return {
-      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
-        if (time !== undefined) {
-          synth.triggerAttackRelease('C5', duration, time)
-        } else {
-          synth.triggerAttackRelease('C5', duration)
-        }
-      },
-      connect: (destination: Tone.InputNode) => synth.connect(destination),
-      disconnect: () => synth.disconnect(),
-      dispose: () => synth.dispose(),
-    }
-  }
-
-  const createFallbackOpenhat = () => {
-    const synth = new Tone.MetalSynth()
-    // Connect to openhat track effects by default
-    const openhatEffects = trackEffectsRef.current.openhat
-    if (openhatEffects) {
-      synth.connect(openhatEffects.gain)
-    }
-    return {
-      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
-        if (time !== undefined) {
-          synth.triggerAttackRelease('C5', duration, time)
-        } else {
-          synth.triggerAttackRelease('C5', duration)
-        }
-      },
-      connect: (destination: Tone.InputNode) => synth.connect(destination),
-      disconnect: () => synth.disconnect(),
-      dispose: () => synth.dispose(),
-    }
-  }
 
   const disposeDrumSynths = () => {
     // Cleanup drum synths
@@ -884,9 +803,17 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
     setCurrentDrumPattern(patternId)
   }, [])
 
-  const selectDrumKit = useCallback((kitId: string) => {
-    setCurrentDrumKit(kitId)
-  }, [])
+  const selectDrumKit = useCallback(
+    (kitId: string) => {
+      setCurrentDrumKit(kitId)
+      if (drumSynthesizerRef.current) {
+        drumSynthesizerRef.current.setKit(kitId)
+        // Recreate drum synths with new kit
+        initializeDrumSynths()
+      }
+    },
+    [initializeDrumSynths]
+  )
 
   const setScale = useCallback((scaleId: string) => {
     const scale = SCALES.find(s => s.id === scaleId)

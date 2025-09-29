@@ -20,8 +20,6 @@ interface DrumComponents {
 export const DRUM_KITS: DrumKitDefinition[] = [
   { id: '808', name: 'TR-808', description: 'Classic analog drum machine sounds' },
   { id: '909', name: 'TR-909', description: 'Punchy house and techno drums' },
-  { id: 'acoustic', name: 'Acoustic', description: 'Natural drum kit sounds' },
-  { id: 'electronic', name: 'Electronic', description: 'Modern electronic drums' },
 ]
 
 export class DrumSynthesizer {
@@ -55,24 +53,28 @@ export class DrumSynthesizer {
   }
 
   private create808KickComponents(): DrumComponents {
-    const pitchEnv = new Tone.Envelope({
-      attack: 0.01,
-      decay: 0.08,
+    // Pitch envelope with aggressive sweep (100Hz → 40Hz) for authentic 808 thump
+    const pitchEnv = new Tone.FrequencyEnvelope({
+      attack: 0.001,
+      decay: 0.05, // Fast pitch decay for punchy attack
       sustain: 0,
       release: 0,
+      baseFrequency: 40, // Lower fundamental for deeper sub-bass
+      octaves: 1.3, // ~100Hz initial pitch sweep
     })
 
+    // Tighter amplitude envelope for classic 808 punch
     const ampEnv = new Tone.Envelope({
-      attack: 0.01,
-      decay: 0.3,
+      attack: 0.005,
+      decay: 0.4, // Longer decay for extended sub-bass tail
       sustain: 0,
-      release: 0.2,
+      release: 0.15,
     })
 
-    const osc = new Tone.Oscillator(60, 'sine').start()
-    const distortion = new Tone.Distortion(0.4)
-    const lowpass = new Tone.Filter(100, 'lowpass')
-    const compressor = new Tone.Compressor(-12, 4)
+    const osc = new Tone.Oscillator(40, 'sine').start() // Deeper fundamental
+    const distortion = new Tone.Distortion(0.5) // More harmonic content
+    const lowpass = new Tone.Filter(80, 'lowpass') // Tighter low-pass for pure sub
+    const compressor = new Tone.Compressor(-15, 6) // Heavy compression for punch
     const vca = new Tone.Gain()
 
     // Connect pitch envelope to frequency
@@ -207,45 +209,66 @@ export class DrumSynthesizer {
     return this.createDrumSynthFromComponents(this.create808SnareComponents())
   }
 
-  private create909SnareComponents(): DrumComponents {
-    // High-frequency noise burst
+  private create909SnareNoiseComponent(): {
+    noiseEnv: Tone.Envelope
+    noise: Tone.Noise
+    noiseGain: Tone.Gain
+  } {
     const noiseEnv = new Tone.Envelope({
-      attack: 0.001,
-      decay: 0.06,
-      sustain: 0,
-      release: 0.02,
+      attack: 0.0005,
+      decay: 0.08,
+      sustain: 0.05,
+      release: 0.04,
     })
     const noise = new Tone.Noise('white').start()
-    const noiseGain = new Tone.Gain(0.7)
-
-    // Fundamental tone
-    const toneEnv = new Tone.Envelope({
-      attack: 0.001,
-      decay: 0.05,
-      sustain: 0,
-      release: 0.02,
-    })
-    const toneOsc = new Tone.Oscillator(250, 'triangle').start()
-    const toneGain = new Tone.Gain(0.4)
-
-    // Processing
-    const mixer = new Tone.Gain()
-    const highpass = new Tone.Filter(2000, 'highpass')
-    const compressor = new Tone.Compressor(-10, 4)
-
-    // Connect audio chain
+    const noiseGain = new Tone.Gain(0.8)
     noise.connect(noiseGain)
     noiseEnv.connect(noiseGain.gain)
-    toneOsc.connect(toneGain)
-    toneEnv.connect(toneGain.gain)
+    return { noiseEnv, noise, noiseGain }
+  }
+
+  private create909SnareToneComponents(): {
+    tone1Env: Tone.Envelope
+    tone1Osc: Tone.Oscillator
+    tone1Gain: Tone.Gain
+    tone2Env: Tone.Envelope
+    tone2Osc: Tone.Oscillator
+    tone2Gain: Tone.Gain
+  } {
+    // Dual-tone fundamental (250Hz + 330Hz)
+    const tone1Env = new Tone.Envelope({ attack: 0.0005, decay: 0.04, sustain: 0, release: 0.02 })
+    const tone1Osc = new Tone.Oscillator(250, 'triangle').start()
+    const tone1Gain = new Tone.Gain(0.35)
+    tone1Osc.connect(tone1Gain)
+    tone1Env.connect(tone1Gain.gain)
+
+    const tone2Env = new Tone.Envelope({ attack: 0.001, decay: 0.035, sustain: 0, release: 0.015 })
+    const tone2Osc = new Tone.Oscillator(330, 'triangle').start()
+    const tone2Gain = new Tone.Gain(0.25)
+    tone2Osc.connect(tone2Gain)
+    tone2Env.connect(tone2Gain.gain)
+
+    return { tone1Env, tone1Osc, tone1Gain, tone2Env, tone2Osc, tone2Gain }
+  }
+
+  private create909SnareComponents(): DrumComponents {
+    const { noiseEnv, noise, noiseGain } = this.create909SnareNoiseComponent()
+    const { tone1Env, tone1Osc, tone1Gain, tone2Env, tone2Osc, tone2Gain } =
+      this.create909SnareToneComponents()
+
+    const mixer = new Tone.Gain()
+    const highpass = new Tone.Filter(1500, 'highpass')
+    const compressor = new Tone.Compressor(-12, 5)
+
     noiseGain.connect(mixer)
-    toneGain.connect(mixer)
+    tone1Gain.connect(mixer)
+    tone2Gain.connect(mixer)
     mixer.chain(highpass, compressor, this.gainNode)
 
     return {
-      envelopes: [noiseEnv, toneEnv],
-      oscillators: [toneOsc],
-      effects: [noiseGain, toneGain, mixer, highpass, compressor],
+      envelopes: [noiseEnv, tone1Env, tone2Env],
+      oscillators: [tone1Osc, tone2Osc],
+      effects: [noiseGain, tone1Gain, tone2Gain, mixer, highpass, compressor],
       noiseGenerators: [noise],
     }
   }
