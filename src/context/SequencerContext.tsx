@@ -886,6 +886,9 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
 
   const selectDrumKit = useCallback((kitId: string) => {
     setCurrentDrumKit(kitId)
+    if (drumSynthesizerRef.current) {
+      drumSynthesizerRef.current.setKit(kitId)
+    }
   }, [])
 
   const setScale = useCallback((scaleId: string) => {
