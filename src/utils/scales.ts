@@ -90,13 +90,17 @@ export function generateScaleNotes(scale: Scale, key: Key): string[] {
  */
 export function getNoteForRow(rowIndex: number, scale: Scale, key: Key): string {
   const noteIndex = 15 - rowIndex // Invert row (top = high notes)
-  const octave = Math.floor(noteIndex / scale.intervals.length) + 2
   const scaleIndex = noteIndex % scale.intervals.length
 
-  const safeScaleIndex = Math.max(0, Math.min(scale.intervals.length - 1, scaleIndex))
-  const interval = scale.intervals[safeScaleIndex] || 0
-  const pitchClass = (key.pitchClass + interval) % 12
-  const safeIndex = Math.max(0, Math.min(11, pitchClass))
+  // Calculate the actual semitone offset from C0
+  const scaleRepetition = Math.floor(noteIndex / scale.intervals.length)
+  const semitoneOffset = scaleRepetition * 12 + scale.intervals[scaleIndex] + key.pitchClass
+
+  // Calculate octave based on total semitones from C0
+  const octave = Math.floor(semitoneOffset / 12) + 2
+  const finalPitchClass = semitoneOffset % 12
+
+  const safeIndex = Math.max(0, Math.min(11, finalPitchClass))
   const noteName = NOTE_NAMES[safeIndex] || 'C'
 
   return noteName + octave

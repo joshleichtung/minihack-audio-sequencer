@@ -2,7 +2,10 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
 import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
+import type { ToneDuration, ToneTime } from '../audio/DrumSynthesis'
 import { mobileAudioManager } from '../audio/MobileAudioFix'
+import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
+import type { Scale, Key } from '../utils/scales'
 
 interface Cell {
   active: boolean
@@ -61,6 +64,10 @@ interface SequencerContextType {
   setDrumVolume: (volume: number) => void
   selectDrumPattern: (patternId: string) => void
   selectDrumKit: (kitId: string) => void
+  currentScale: Scale | null
+  currentKey: Key | null
+  setScale: (scaleId: string) => void
+  setKey: (keyId: string) => void
 }
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -87,6 +94,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [grid, setGrid] = useState<Cell[][]>(initGrid)
   const gridRef = useRef<Cell[][]>(initGrid())
   const [isPlaying, setIsPlaying] = useState(false)
+  const isPlayingRef = useRef(false) // Add ref for scheduler to check
   const [tempo, setTempo] = useState(120)
   const [currentStep, setCurrentStep] = useState(0)
 
@@ -119,6 +127,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
   const [currentDrumKit, setCurrentDrumKit] = useState('808')
 
+  // Scale and key state
+  const [currentScale, setCurrentScaleState] = useState<Scale | null>(SCALES.find(s => s.id === 'pentatonic') || SCALES[0])
+  const [currentKey, setCurrentKeyState] = useState<Key | null>(KEYS.find(k => k.id === 'c') || KEYS[0])
+
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const drumSynthsRef = useRef<{ [key: string]: any }>({})
   const drumSynthesizerRef = useRef<DrumSynthesizer | null>(null)
@@ -126,6 +138,8 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const drumEnabledRef = useRef(drumEnabled)
   const currentDrumPatternRef = useRef(currentDrumPattern)
   const currentDrumKitRef = useRef(currentDrumKit)
+  const currentScaleRef = useRef<Scale | null>(SCALES.find(s => s.id === 'pentatonic') || SCALES[0])
+  const currentKeyRef = useRef<Key | null>(KEYS.find(k => k.id === 'c') || KEYS[0])
 
   // Effects refs
   const reverbRef = useRef<Tone.Reverb | null>(null)
@@ -165,7 +179,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Lookahead scheduler function
   const scheduler = useCallback(() => {
-    if (!isPlaying) return
+    if (!isPlayingRef.current) {
+      return
+    }
 
     const currentTime = Tone.context.currentTime
     const lookaheadTime = lookaheadTimeRef.current / 1000 // Convert to seconds
@@ -189,7 +205,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // Advance to next step
-      const secondsPerStep = 60.0 / tempo // Each step = 1 beat (not 16th notes)
+      const secondsPerStep = (60.0 / tempo) / 4 // Each step = 16th note (1/4 beat)
       nextStepTimeRef.current += secondsPerStep
       currentStepRef.current = (currentStepRef.current + 1) % 16
     }
@@ -210,15 +226,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Schedule audio events
       const transportTime = time - Tone.context.currentTime
 
-      // Play melody notes
-      const baseNotes = ['C', 'D', 'E', 'G', 'A']
+      // Play melody notes using current scale and key
       for (let row = 0; row < 16; row++) {
         const cell = gridRef.current[row][step]
-        if (cell.active) {
-          const noteIndex = 15 - row
-          const octave = Math.floor(noteIndex / 5) + 2
-          const scaleIndex = noteIndex % 5
-          const note = baseNotes[scaleIndex] + octave
+        if (cell.active && currentScaleRef.current && currentKeyRef.current) {
+          const note = getNoteForRow(row, currentScaleRef.current, currentKeyRef.current)
 
           if (synthRef.current) {
             synthRef.current.triggerAttackRelease(note, '16n', `+${transportTime}`, cell.velocity)
@@ -236,11 +248,9 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             if (currentPattern.pattern[drumIndex][step] === 1) {
               const synth = drumSynthsRef.current[drumName]
               if (synth) {
-                // Schedule with precise timing
-                if (drumName === 'snare' && synth.triggerAttackRelease) {
+                // Schedule with precise timing - all drums use (duration, time) interface
+                if (synth.triggerAttackRelease) {
                   synth.triggerAttackRelease('16n', `+${transportTime}`)
-                } else if (synth.triggerAttackRelease) {
-                  synth.triggerAttackRelease('C1', '16n', `+${transportTime}`)
                 }
               }
             }
@@ -260,8 +270,13 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [])
 
-  // Initialize Tone.js
-  useEffect(() => {
+  // Audio initialization flag
+  const audioInitialized = useRef(false)
+
+  // Initialize audio objects only when needed (lazy initialization)
+  const initializeAudio = useCallback(() => {
+    if (audioInitialized.current) return
+
     // Create effects chain
     reverbRef.current = new Tone.Reverb(0.8)
     delayRef.current = new Tone.FeedbackDelay('8n', 0.3)
@@ -306,6 +321,11 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Initialize drum synthesizers with improved sounds
     initializeDrumSynths()
 
+    audioInitialized.current = true
+  }, [drumVolume])
+
+  // Cleanup effect
+  useEffect(() => {
     return () => {
       if (scheduleIntervalRef.current) {
         clearInterval(scheduleIntervalRef.current)
@@ -318,10 +338,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (chorusRef.current) chorusRef.current.dispose()
       if (wahFilterRef.current) wahFilterRef.current.dispose()
     }
-  }, [drumVolume])
+  }, [])
 
-  const initializeDrumSynths = () => {
-    if (!drumSynthesizerRef.current) return
+  const initializeDrumSynths = useCallback(() => {
+    if (!drumSynthesizerRef.current || !drumGainRef.current) return
 
     // Create new drum synths using the advanced synthesis
     const kick = drumSynthesizerRef.current.createDrumSynth('kick')
@@ -335,14 +355,18 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       hihat: hihat || createFallbackHihat(),
       openhat: openhat || createFallbackOpenhat(),
     }
-  }
+  }, [])
 
   // Fallback drum implementations (simplified versions)
   const createFallbackKick = () => {
     const synth = new Tone.MembraneSynth().connect(drumGainRef.current!)
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        synth.triggerAttackRelease('C1', duration, time)
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C1', duration, time)
+        } else {
+          synth.triggerAttackRelease('C1', duration)
+        }
       },
       dispose: () => synth.dispose(),
     }
@@ -351,8 +375,12 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createFallbackSnare = () => {
     const synth = new Tone.NoiseSynth().connect(drumGainRef.current!)
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        synth.triggerAttackRelease(duration, time)
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease(duration, time)
+        } else {
+          synth.triggerAttackRelease(duration)
+        }
       },
       dispose: () => synth.dispose(),
     }
@@ -361,8 +389,12 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createFallbackHihat = () => {
     const synth = new Tone.MetalSynth().connect(drumGainRef.current!)
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        synth.triggerAttackRelease('C5', duration, time)
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C5', duration, time)
+        } else {
+          synth.triggerAttackRelease('C5', duration)
+        }
       },
       dispose: () => synth.dispose(),
     }
@@ -371,8 +403,12 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const createFallbackOpenhat = () => {
     const synth = new Tone.MetalSynth().connect(drumGainRef.current!)
     return {
-      triggerAttackRelease: (duration: string, time?: string) => {
-        synth.triggerAttackRelease('C5', duration, time)
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C5', duration, time)
+        } else {
+          synth.triggerAttackRelease('C5', duration)
+        }
       },
       dispose: () => synth.dispose(),
     }
@@ -405,6 +441,15 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       initializeDrumSynths()
     }
   }, [currentDrumKit])
+
+  // Keep scale and key refs updated
+  useEffect(() => {
+    currentScaleRef.current = currentScale
+  }, [currentScale])
+
+  useEffect(() => {
+    currentKeyRef.current = currentKey
+  }, [currentKey])
 
   const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
     const newGrid = [...gridRef.current]
@@ -448,8 +493,17 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       setCurrentStep(0)
       currentStepRef.current = 0
+      isPlayingRef.current = false
       setIsPlaying(false)
     } else {
+      // Ensure Tone.js context is started first
+      if (Tone.context.state !== 'running') {
+        await Tone.start()
+      }
+
+      // Initialize audio objects now that we have user interaction
+      initializeAudio()
+
       // Ensure mobile audio is properly initialized
       await mobileAudioManager.initializeAudio()
 
@@ -463,9 +517,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       Tone.Transport.bpm.value = tempo
       Tone.Transport.start()
+      isPlayingRef.current = true
       setIsPlaying(true)
     }
-  }, [isPlaying, tempo, scheduler])
+  }, [isPlaying, tempo, scheduler, initializeAudio])
 
   const clearGrid = useCallback(() => {
     const newGrid = initGrid()
@@ -648,6 +703,16 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentDrumKit(kitId)
   }, [])
 
+  const setScale = useCallback((scaleId: string) => {
+    const scale = SCALES.find(s => s.id === scaleId)
+    setCurrentScaleState(scale || null)
+  }, [])
+
+  const setKey = useCallback((keyId: string) => {
+    const key = KEYS.find(k => k.id === keyId)
+    setCurrentKeyState(key || null)
+  }, [])
+
   // Update synth parameters
   useEffect(() => {
     if (synthRef.current) {
@@ -696,6 +761,10 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setDrumVolume: setDrumVolumeCallback,
         selectDrumPattern,
         selectDrumKit,
+        currentScale,
+        currentKey,
+        setScale,
+        setKey,
       }}
     >
       {children}
