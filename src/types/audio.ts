@@ -87,10 +87,25 @@ export interface SynthParameters {
   brightness: number
   texture: number
   attack: number
+  decay: number
+  sustain: number
   release: number
   volume: number
   waveform: string
   character: string
+  // Enhanced synthesis parameters
+  detune: number // Pitch detune in cents
+  portamento: number // Glide time between notes
+  filterCutoff: number // Filter frequency
+  filterResonance: number // Filter Q factor
+  filterEnvAmount: number // Filter envelope amount
+  lfoRate: number // LFO frequency
+  lfoAmount: number // LFO modulation depth
+  lfoTarget: string // LFO target: 'frequency', 'filter', 'amplitude'
+  // Oscillator mixing
+  oscMix: number // Mix between main and sub oscillator
+  subOscType: string // Sub oscillator waveform
+  noiseLevel: number // Noise generator level
 }
 
 export interface EffectParameters {

@@ -8,8 +8,26 @@ import type {
   SynthParameters,
   EffectParameters,
   DrumParameters,
-  DrumKitDefinition
+  DrumKitDefinition,
 } from './index'
+
+// Track control interface for individual track settings
+export interface TrackControl {
+  volume: number
+  pan: number
+  muted: boolean
+  solo: boolean
+  reverb: number
+  delay: number
+}
+
+// Timing statistics interface
+export interface TimingStats {
+  averageLatency: number
+  jitter: number
+  missedEvents: number
+  totalEvents: number
+}
 
 export interface SequencerContextType {
   // Grid state
@@ -51,6 +69,17 @@ export interface SequencerContextType {
   currentKey: Key | null
   setScale: (scaleId: string) => void
   setKey: (keyId: string) => void
+
+  // Individual track controls
+  trackControls: Record<string, TrackControl>
+  updateTrackControl: (trackId: string, control: string, value: number | boolean) => void
+  soloTrack: (trackId: string) => void
+  muteTrack: (trackId: string) => void
+
+  // Enhanced timing controls
+  setSwingAmount: (amount: number) => void
+  toggleMicroTiming: () => void
+  getTimingStats: () => TimingStats
 }
 
 export interface SequencerProviderProps {

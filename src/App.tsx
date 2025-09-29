@@ -6,6 +6,7 @@ import PresetButtons from './components/PresetButtons'
 import DrumControls from './components/DrumControls'
 import EffectsControls from './components/EffectsControls'
 import Visualizer from './components/Visualizer'
+import TrackMixer from './components/TrackMixer'
 import { SequencerProvider, useSequencer } from './context/SequencerContextImproved'
 
 const useSpacebarToggle = (togglePlayback: () => void): void => {
@@ -115,6 +116,9 @@ const AppContent = (): React.JSX.Element => {
         <MainContent />
         <div className="mt-2 lg:mt-3">
           <Transport />
+        </div>
+        <div className="mt-2 lg:mt-3">
+          <TrackMixer />
         </div>
       </div>
     </div>

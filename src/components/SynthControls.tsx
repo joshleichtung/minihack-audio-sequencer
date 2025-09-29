@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+/* eslint-disable max-lines */
 import { useSequencer } from '../context/SequencerContextImproved'
 import { SCALES, KEYS } from '../utils/scales'
 import type { SynthParameters } from '../types'
@@ -91,6 +92,14 @@ const CHARACTER_PATCHES = [
 
 const WAVEFORMS = ['sine', 'sawtooth', 'square', 'triangle'] as const
 
+const LFO_TARGETS = [
+  { id: 'frequency', name: 'FREQ' },
+  { id: 'filter', name: 'FILTER' },
+  { id: 'amplitude', name: 'AMP' },
+] as const
+
+const SUB_OSC_TYPES = ['sine', 'sawtooth', 'square', 'triangle'] as const
+
 const createSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
   {
     label: 'BRIGHTNESS',
@@ -118,6 +127,24 @@ const createSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
     reverseTransform: (value: number): number => value / 50,
   },
   {
+    label: 'DECAY',
+    param: 'decay',
+    min: 0,
+    max: 100,
+    value: synthParams.decay * 50,
+    displayValue: `${synthParams.decay.toFixed(2)}s`,
+    reverseTransform: (value: number): number => value / 50,
+  },
+  {
+    label: 'SUSTAIN',
+    param: 'sustain',
+    min: 0,
+    max: 100,
+    value: synthParams.sustain * 100,
+    displayValue: `${Math.round(synthParams.sustain * 100)}%`,
+    reverseTransform: (value: number): number => value / 100,
+  },
+  {
     label: 'RELEASE',
     param: 'release',
     min: 0,
@@ -136,6 +163,82 @@ const createSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
   },
 ]
 
+const createAdvancedSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
+  {
+    label: 'DETUNE',
+    param: 'detune',
+    min: -100,
+    max: 100,
+    value: synthParams.detune,
+    displayValue: `${synthParams.detune > 0 ? '+' : ''}${synthParams.detune}¢`,
+  },
+  {
+    label: 'PORTAMENTO',
+    param: 'portamento',
+    min: 0,
+    max: 100,
+    value: synthParams.portamento * 100,
+    displayValue: `${synthParams.portamento.toFixed(2)}s`,
+    reverseTransform: (value: number): number => value / 100,
+  },
+  {
+    label: 'FILTER CUTOFF',
+    param: 'filterCutoff',
+    min: 200,
+    max: 8000,
+    value: synthParams.filterCutoff,
+    displayValue: `${Math.round(synthParams.filterCutoff)}Hz`,
+  },
+  {
+    label: 'FILTER RES',
+    param: 'filterResonance',
+    min: 1,
+    max: 20,
+    value: synthParams.filterResonance,
+    displayValue: synthParams.filterResonance.toFixed(1),
+  },
+  {
+    label: 'FILTER ENV',
+    param: 'filterEnvAmount',
+    min: 0,
+    max: 4,
+    value: synthParams.filterEnvAmount,
+    displayValue: synthParams.filterEnvAmount.toFixed(1),
+  },
+  {
+    label: 'LFO RATE',
+    param: 'lfoRate',
+    min: 0.1,
+    max: 20,
+    value: synthParams.lfoRate,
+    displayValue: `${synthParams.lfoRate.toFixed(1)}Hz`,
+  },
+  {
+    label: 'LFO AMOUNT',
+    param: 'lfoAmount',
+    min: 0,
+    max: 100,
+    value: synthParams.lfoAmount,
+    displayValue: `${Math.round(synthParams.lfoAmount)}%`,
+  },
+  {
+    label: 'OSC MIX',
+    param: 'oscMix',
+    min: 0,
+    max: 100,
+    value: synthParams.oscMix,
+    displayValue: `${Math.round(synthParams.oscMix)}%`,
+  },
+  {
+    label: 'NOISE LEVEL',
+    param: 'noiseLevel',
+    min: 0,
+    max: 100,
+    value: synthParams.noiseLevel,
+    displayValue: `${Math.round(synthParams.noiseLevel)}%`,
+  },
+]
+
 const SynthControls = (): React.JSX.Element => {
   const {
     synthParams,
@@ -147,6 +250,7 @@ const SynthControls = (): React.JSX.Element => {
     setKey,
   } = useSequencer()
   const sliderConfigs = createSliderConfigs(synthParams)
+  const advancedSliderConfigs = createAdvancedSliderConfigs(synthParams)
 
   return (
     <div
@@ -157,6 +261,7 @@ const SynthControls = (): React.JSX.Element => {
         SYNTH CONTROLS
       </h2>
       <div className="space-y-3 sm:space-y-4">
+        {/* Basic Controls */}
         {sliderConfigs.map(config => (
           <SliderControl key={config.param} config={config} onUpdate={updateSynthParam} />
         ))}
@@ -173,20 +278,47 @@ const SynthControls = (): React.JSX.Element => {
           onSelect={selectCharacter}
           colorClass="lcars-purple"
         />
-        <ButtonGrid
-          label="SCALE"
-          options={SCALES.map(scale => ({ id: scale.id, name: scale.name }))}
-          currentValue={currentScale?.id || ''}
-          onSelect={setScale}
-          colorClass="lcars-blue"
-        />
-        <ButtonGrid
-          label="KEY"
-          options={KEYS.map(key => ({ id: key.id, name: key.name }))}
-          currentValue={currentKey?.id || ''}
-          onSelect={setKey}
-          colorClass="lcars-orange"
-        />
+
+        {/* Advanced Controls */}
+        <div className="border-t border-gray-700 pt-3">
+          <h3 className="text-lcars-orange font-bold mb-3 text-xs">ADVANCED</h3>
+          {advancedSliderConfigs.map(config => (
+            <SliderControl key={config.param} config={config} onUpdate={updateSynthParam} />
+          ))}
+          <ButtonGrid
+            label="LFO TARGET"
+            options={[...LFO_TARGETS]}
+            currentValue={synthParams.lfoTarget}
+            onSelect={(value): void => updateSynthParam('lfoTarget', value)}
+            colorClass="lcars-green"
+          />
+          <ButtonGrid
+            label="SUB OSC"
+            options={[...SUB_OSC_TYPES]}
+            currentValue={synthParams.subOscType}
+            onSelect={(value): void => updateSynthParam('subOscType', value)}
+            colorClass="lcars-blue"
+          />
+        </div>
+
+        {/* Scale and Key Controls */}
+        <div className="border-t border-gray-700 pt-3">
+          <h3 className="text-lcars-blue font-bold mb-3 text-xs">SCALE & KEY</h3>
+          <ButtonGrid
+            label="SCALE"
+            options={SCALES.map(scale => ({ id: scale.id, name: scale.name }))}
+            currentValue={currentScale?.id || ''}
+            onSelect={setScale}
+            colorClass="lcars-blue"
+          />
+          <ButtonGrid
+            label="KEY"
+            options={KEYS.map(key => ({ id: key.id, name: key.name }))}
+            currentValue={currentKey?.id || ''}
+            onSelect={setKey}
+            colorClass="lcars-orange"
+          />
+        </div>
       </div>
     </div>
   )
