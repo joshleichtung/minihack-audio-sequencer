@@ -128,8 +128,12 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [currentDrumKit, setCurrentDrumKit] = useState('808')
 
   // Scale and key state
-  const [currentScale, setCurrentScaleState] = useState<Scale | null>(SCALES.find(s => s.id === 'pentatonic') || SCALES[0])
-  const [currentKey, setCurrentKeyState] = useState<Key | null>(KEYS.find(k => k.id === 'c') || KEYS[0])
+  const [currentScale, setCurrentScaleState] = useState<Scale | null>(
+    SCALES.find(s => s.id === 'pentatonic') || SCALES[0]
+  )
+  const [currentKey, setCurrentKeyState] = useState<Key | null>(
+    KEYS.find(k => k.id === 'c') || KEYS[0]
+  )
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
   const drumSynthsRef = useRef<{ [key: string]: any }>({})
@@ -205,7 +209,7 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // Advance to next step
-      const secondsPerStep = (60.0 / tempo) / 4 // Each step = 16th note (1/4 beat)
+      const secondsPerStep = 60.0 / tempo / 4 // Each step = 16th note (1/4 beat)
       nextStepTimeRef.current += secondsPerStep
       currentStepRef.current = (currentStepRef.current + 1) % 16
     }
@@ -457,19 +461,25 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const currentCell = newGrid[row][col]
 
     if (shiftKey) {
-      newGrid[row][col] = {
-        active: !currentCell.active,
-        velocity: 0.8,
+      // Shift+click: cycle through velocity levels (if active)
+      if (currentCell.active) {
+        if (currentCell.velocity === 0.3) {
+          newGrid[row][col] = { active: true, velocity: 0.7 }
+        } else if (currentCell.velocity === 0.7) {
+          newGrid[row][col] = { active: true, velocity: 1.0 }
+        } else {
+          newGrid[row][col] = { active: true, velocity: 0.3 }
+        }
+      } else {
+        // If not active, activate with default velocity
+        newGrid[row][col] = { active: true, velocity: 0.7 }
       }
     } else {
-      if (!currentCell.active) {
-        newGrid[row][col] = { active: true, velocity: 0.8 }
-      } else if (currentCell.velocity === 0.8) {
-        newGrid[row][col] = { active: true, velocity: 1.0 }
-      } else if (currentCell.velocity === 1.0) {
-        newGrid[row][col] = { active: true, velocity: 0.5 }
+      // Normal click: toggle active/inactive
+      if (currentCell.active) {
+        newGrid[row][col] = { active: false, velocity: 0.7 }
       } else {
-        newGrid[row][col] = { active: false, velocity: 0.8 }
+        newGrid[row][col] = { active: true, velocity: 0.7 }
       }
     }
 
