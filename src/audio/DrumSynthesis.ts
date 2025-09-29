@@ -20,8 +20,6 @@ interface DrumComponents {
 export const DRUM_KITS: DrumKitDefinition[] = [
   { id: '808', name: 'TR-808', description: 'Classic analog drum machine sounds' },
   { id: '909', name: 'TR-909', description: 'Punchy house and techno drums' },
-  { id: 'acoustic', name: 'Acoustic', description: 'Natural drum kit sounds' },
-  { id: 'electronic', name: 'Electronic', description: 'Modern electronic drums' },
 ]
 
 export class DrumSynthesizer {
@@ -352,10 +350,6 @@ export class DrumSynthesizer {
         return this.create808DrumType(drumType)
       case '909':
         return this.create909DrumType(drumType)
-      case 'acoustic':
-        return this.createAcousticDrumType(drumType)
-      case 'electronic':
-        return this.createElectronicDrumType(drumType)
       default:
         return null
     }
@@ -386,42 +380,6 @@ export class DrumSynthesizer {
         return this.create909Hihat()
       case 'openhat':
         return this.create909Hihat() // Use same as hihat with longer decay
-      default:
-        return null
-    }
-  }
-
-  private createAcousticDrumType(
-    drumType: 'kick' | 'snare' | 'hihat' | 'openhat'
-  ): DrumSynth | null {
-    // Acoustic kit uses 909 as base with warmer tuning
-    switch (drumType) {
-      case 'kick':
-        return this.create909Kick()
-      case 'snare':
-        return this.create909Snare()
-      case 'hihat':
-        return this.create909Hihat()
-      case 'openhat':
-        return this.create909Hihat()
-      default:
-        return null
-    }
-  }
-
-  private createElectronicDrumType(
-    drumType: 'kick' | 'snare' | 'hihat' | 'openhat'
-  ): DrumSynth | null {
-    // Electronic kit uses 808 as base with tighter envelopes
-    switch (drumType) {
-      case 'kick':
-        return this.create808Kick()
-      case 'snare':
-        return this.create808Snare()
-      case 'hihat':
-        return this.create808Hihat()
-      case 'openhat':
-        return this.create808Hihat()
       default:
         return null
     }
