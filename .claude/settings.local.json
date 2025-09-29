@@ -10,7 +10,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(gh api:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr:*)"
     ],
     "deny": [],
     "ask": []
