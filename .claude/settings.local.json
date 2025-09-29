@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Read(//Users/josh/**)",
+      "Bash(gh repo view:*)",
+      "Bash(npm run lint)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh api:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": []
