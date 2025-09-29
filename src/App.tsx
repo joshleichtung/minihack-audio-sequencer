@@ -7,7 +7,7 @@ import DrumControls from './components/DrumControls'
 import EffectsControls from './components/EffectsControls'
 import Visualizer from './components/Visualizer'
 import TrackMixer from './components/TrackMixer'
-import { SequencerProvider, useSequencer } from './context/SequencerContextImproved'
+import { SequencerProvider, useSequencer } from './context/SequencerContext'
 
 const useSpacebarToggle = (togglePlayback: () => void): void => {
   useEffect((): (() => void) => {

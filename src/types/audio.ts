@@ -1,4 +1,5 @@
 // Centralized audio and Tone.js type definitions
+import * as Tone from 'tone'
 
 // Tone.js duration notation types
 export type ToneDuration =
@@ -123,7 +124,7 @@ export interface DrumParameters {
 
 // Interface for drum synthesizers with proper typing
 export interface ToneDrumSynth {
-  triggerAttackRelease: (note: string | number, duration: ToneDuration, time?: ToneTime) => void
+  triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => void
   dispose?: () => void
   output?: Tone.ToneAudioNode
   connect?: (destination: Tone.InputNode) => void

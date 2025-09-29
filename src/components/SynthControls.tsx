@@ -1,6 +1,6 @@
 /* eslint-disable max-lines-per-function */
 /* eslint-disable max-lines */
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 import { SCALES, KEYS } from '../utils/scales'
 import type { SynthParameters } from '../types'
 

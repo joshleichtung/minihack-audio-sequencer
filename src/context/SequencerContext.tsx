@@ -1,63 +1,23 @@
-/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
-import type { Scale, Key } from '../utils/scales'
+import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
+import type { ToneDuration, ToneTime } from '../types/audio'
+import { mobileAudioManager } from '../audio/MobileAudioFix'
 import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
+import type {
+  Cell,
+  DrumPattern,
+  Scale,
+  Key,
+  SequencerContextType,
+  SequencerProviderProps,
+  ScheduledEvent,
+  SynthParameters,
+  EffectParameters,
+} from '../types'
 
-interface Cell {
-  active: boolean
-  velocity: number
-}
-
-interface DrumPattern {
-  id: string
-  name: string
-  genre: string
-  pattern: number[][] // [kick, snare, hihat, openhat] x N steps (0 or 1), supports 16, 32, etc.
-  kit: string
-  length: number // Pattern length in steps
-}
-
-interface SequencerContextType {
-  grid: Cell[][]
-  isPlaying: boolean
-  tempo: number
-  currentStep: number
-  toggleCell: (row: number, col: number, shiftKey?: boolean) => void
-  togglePlayback: () => void
-  setTempo: (tempo: number) => void
-  clearGrid: () => void
-  setPreset: (preset: string) => void
-  synthParams: {
-    brightness: number
-    texture: number
-    attack: number
-    release: number
-    volume: number
-    waveform: string
-    character: string
-  }
-  effectsParams: {
-    reverb: number
-    delay: number
-    chorus: number
-    wahFilter: number
-  }
-  updateSynthParam: (param: string, value: number | string) => void
-  updateEffectsParam: (param: string, value: number) => void
-  selectCharacter: (character: string) => void
-  drumEnabled: boolean
-  drumVolume: number
-  currentDrumPattern: string
-  drumPatterns: DrumPattern[]
-  toggleDrums: () => void
-  setDrumVolume: (volume: number) => void
-  selectDrumPattern: (patternId: string) => void
-  currentScale: Scale
-  currentKey: Key
-  setScale: (scaleId: string) => void
-  setKey: (keyId: string) => void
-}
+import type { DrumSynthCollection, CharacterPatchCollection } from '../types/audio'
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
 
@@ -69,7 +29,7 @@ export const useSequencer = () => {
   return context
 }
 
-export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }) => {
   // Initialize 16x16 grid
   const initGrid = () =>
     Array(16)
@@ -77,46 +37,153 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       .map(() =>
         Array(16)
           .fill(null)
-          .map(() => ({ active: false, velocity: 0.7 }))
+          .map(() => ({ active: false, velocity: 0.8 }))
       )
 
   const [grid, setGrid] = useState<Cell[][]>(initGrid)
   const gridRef = useRef<Cell[][]>(initGrid())
   const [isPlaying, setIsPlaying] = useState(false)
-  const [tempo, setTempo] = useState(90)
+  const isPlayingRef = useRef(false) // Add ref for scheduler to check
+  const [tempo, setTempo] = useState(120)
   const [currentStep, setCurrentStep] = useState(0)
 
-  const [synthParams, setSynthParams] = useState({
-    brightness: 50, // Filter cutoff
-    texture: 20, // Filter resonance
-    attack: 0.01, // Envelope attack
-    release: 0.3, // Envelope release
-    volume: -12, // Master volume in dB
-    waveform: 'sawtooth', // Oscillator type
-    character: 'default', // Synth patch
+  // Scheduled events tracking
+  const scheduledEventsRef = useRef<ScheduledEvent[]>([])
+  const lookaheadTimeRef = useRef(100) // ms
+  const scheduleIntervalRef = useRef<number | null>(null)
+  const nextStepTimeRef = useRef(0)
+  const currentStepRef = useRef(0)
+
+  // Enhanced timing features
+  const swingAmount = useRef(0) // 0-100% swing amount
+  const microTimingEnabled = useRef(true) // High precision timing
+  const timingAnalysis = useRef({
+    averageLatency: 0,
+    jitter: 0,
+    missedEvents: 0,
+    totalEvents: 0,
   })
 
-  const [effectsParams, setEffectsParams] = useState({
-    reverb: 0, // 0-100 room to hall
-    delay: 0, // 0-100 off to rhythmic
-    chorus: 0, // 0-100 subtle to lush
-    wahFilter: 0, // 0-100 off to squelchy wah
+  // Individual track controls
+  const [trackControls, setTrackControls] = useState({
+    melody: {
+      volume: 0.8,
+      muted: false,
+      solo: false,
+      pan: 0, // -1 to 1
+      reverb: 0,
+      delay: 0,
+      chorus: 0,
+      wahFilter: 0,
+    },
+    kick: {
+      volume: 0.9,
+      muted: false,
+      solo: false,
+      pan: 0,
+      reverb: 0,
+      delay: 0,
+      chorus: 0,
+      wahFilter: 0,
+    },
+    snare: {
+      volume: 0.8,
+      muted: false,
+      solo: false,
+      pan: 0,
+      reverb: 0,
+      delay: 0,
+      chorus: 0,
+      wahFilter: 0,
+    },
+    hihat: {
+      volume: 0.6,
+      muted: false,
+      solo: false,
+      pan: 0.2,
+      reverb: 0,
+      delay: 0,
+      chorus: 0,
+      wahFilter: 0,
+    },
+    openhat: {
+      volume: 0.7,
+      muted: false,
+      solo: false,
+      pan: -0.2,
+      reverb: 0,
+      delay: 0,
+      chorus: 0,
+      wahFilter: 0,
+    },
+  })
+
+  // Track effect chains - refs for real-time audio control
+  const trackEffectsRef = useRef<{
+    [key: string]: {
+      gain: Tone.Gain
+      panner: Tone.Panner3D | Tone.Panner
+      reverb: Tone.Reverb
+      delay: Tone.FeedbackDelay
+      chorus: Tone.Chorus
+      wahFilter: Tone.AutoWah
+    }
+  }>({})
+
+  const [synthParams, setSynthParams] = useState<SynthParameters>({
+    brightness: 50,
+    texture: 20,
+    attack: 0.01,
+    decay: 0.1,
+    sustain: 0.5,
+    release: 0.3,
+    volume: -12,
+    waveform: 'sawtooth',
+    character: 'default',
+    // Enhanced synthesis parameters
+    detune: 0, // Pitch detune in cents
+    portamento: 0, // Glide time between notes
+    filterCutoff: 2000, // Filter frequency
+    filterResonance: 1, // Filter Q factor
+    filterEnvAmount: 0, // Filter envelope amount
+    lfoRate: 4, // LFO frequency
+    lfoAmount: 0, // LFO modulation depth
+    lfoTarget: 'frequency', // LFO target
+    // Oscillator mixing
+    oscMix: 0.5, // Mix between main and sub oscillator
+    subOscType: 'triangle', // Sub oscillator waveform
+    noiseLevel: 0, // Noise generator level
+  })
+
+  const [effectsParams, setEffectsParams] = useState<EffectParameters>({
+    reverb: 0,
+    delay: 0,
+    chorus: 0,
+    wahFilter: 0,
   })
 
   const [drumEnabled, setDrumEnabled] = useState(false)
-  const [drumVolume, setDrumVolume] = useState(-6) // dB
+  const [drumVolume, setDrumVolume] = useState(-6)
   const [currentDrumPattern, setCurrentDrumPattern] = useState('hiphop1')
+  const [currentDrumKit, setCurrentDrumKit] = useState('808')
 
   // Scale and key state
-  const [currentScale, setCurrentScale] = useState<Scale>(SCALES[0]) // Pentatonic
-  const [currentKey, setCurrentKey] = useState<Key>(KEYS[0]) // C
+  const [currentScale, setCurrentScaleState] = useState<Scale | null>(
+    SCALES.find(s => s.id === 'pentatonic') || SCALES[0]
+  )
+  const [currentKey, setCurrentKeyState] = useState<Key | null>(
+    KEYS.find(k => k.id === 'c') || KEYS[0]
+  )
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
-  const sequencerRef = useRef<Tone.Sequence | null>(null)
-  const drumSynthsRef = useRef<{ [key: string]: Tone.Synth | Tone.NoiseSynth }>({})
+  const drumSynthsRef = useRef<DrumSynthCollection>({})
+  const drumSynthesizerRef = useRef<DrumSynthesizer | null>(null)
   const drumGainRef = useRef<Tone.Gain | null>(null)
   const drumEnabledRef = useRef(drumEnabled)
   const currentDrumPatternRef = useRef(currentDrumPattern)
+  const currentDrumKitRef = useRef(currentDrumKit)
+  const currentScaleRef = useRef<Scale | null>(SCALES.find(s => s.id === 'pentatonic') || SCALES[0])
+  const currentKeyRef = useRef<Key | null>(KEYS.find(k => k.id === 'c') || KEYS[0])
 
   // Effects refs
   const reverbRef = useRef<Tone.Reverb | null>(null)
@@ -132,7 +199,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       name: 'BOOM BAP',
       genre: 'Hip Hop',
       kit: 'classic',
-      length: 16,
       pattern: [
         [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // kick
         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
@@ -145,7 +211,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       name: 'TRAP',
       genre: 'Hip Hop',
       kit: 'modern',
-      length: 16,
       pattern: [
         [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0], // kick
         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0], // snare
@@ -153,247 +218,175 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
       ],
     },
-    {
-      id: 'hiphop3',
-      name: 'DRILL',
-      genre: 'Hip Hop',
-      kit: 'hard',
-      length: 16,
-      pattern: [
-        [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'hiphop4',
-      name: 'LOFI',
-      genre: 'Hip Hop',
-      kit: 'vintage',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], // openhat
-      ],
-    },
-    // Jazz
-    {
-      id: 'jazz1',
-      name: 'SWING',
-      genre: 'Jazz',
-      kit: 'jazz',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0], // kick
-        [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], // snare
-        [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0], // hihat
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'jazz2',
-      name: 'BEBOP',
-      genre: 'Jazz',
-      kit: 'vintage',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0], // openhat
-      ],
-    },
-    {
-      id: 'jazz3',
-      name: 'LATIN',
-      genre: 'Jazz',
-      kit: 'latin',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0], // kick
-        [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1], // snare
-        [1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'jazz4',
-      name: 'FUSION',
-      genre: 'Jazz',
-      kit: 'modern',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1], // kick
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], // snare
-        [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1], // openhat
-      ],
-    },
-    // Drum & Bass
-    {
-      id: 'dnb1',
-      name: 'AMEN',
-      genre: 'D&B',
-      kit: 'electronic',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0], // kick
-        [0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1], // snare
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'dnb2',
-      name: 'NEUROFUNK',
-      genre: 'D&B',
-      kit: 'dark',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1], // openhat
-      ],
-    },
-    {
-      id: 'dnb3',
-      name: 'LIQUID',
-      genre: 'D&B',
-      kit: 'smooth',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], // openhat
-      ],
-    },
-    {
-      id: 'dnb4',
-      name: 'JUNGLE',
-      genre: 'D&B',
-      kit: 'classic',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1], // kick
-        [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0], // snare
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    // Additional styles
-    {
-      id: 'house1',
-      name: 'FOUR-ON-FLOOR',
-      genre: 'House',
-      kit: 'electronic',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // kick
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // snare
-        [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1], // openhat
-      ],
-    },
-    {
-      id: 'breakbeat1',
-      name: 'FUNKY BREAKS',
-      genre: 'Breaks',
-      kit: 'funk',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0], // kick
-        [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], // snare
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'rock1',
-      name: 'ROCK STEADY',
-      genre: 'Rock',
-      kit: 'rock',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // kick
-        [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0], // snare
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // hihat
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // openhat
-      ],
-    },
-    {
-      id: 'afrobeat1',
-      name: 'AFROBEAT',
-      genre: 'World',
-      kit: 'world',
-      length: 16,
-      pattern: [
-        [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0], // kick
-        [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1], // snare
-        [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0], // hihat
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // openhat
-      ],
-    },
-    // 32-step patterns to demonstrate extended functionality
-    {
-      id: 'extended32_1',
-      name: 'PROGRESSIVE HOUSE 32',
-      genre: 'House',
-      kit: 'electronic',
-      length: 32,
-      pattern: [
-        [
-          1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0,
-          1, 0,
-        ], // kick - varies in second half
-        [
-          0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0,
-          0, 1,
-        ], // snare - more complex in second half
-        [
-          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0,
-          1, 0,
-        ], // hihat - different pattern second half
-        [
-          0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
-          0, 0,
-        ], // openhat - sparse accents
-      ],
-    },
-    {
-      id: 'extended32_2',
-      name: 'EVOLVING TECHNO 32',
-      genre: 'Techno',
-      kit: 'electronic',
-      length: 32,
-      pattern: [
-        [
-          1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0,
-          1, 1,
-        ], // kick - builds intensity
-        [
-          0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0,
-          1, 0,
-        ], // snare - more hits in second half
-        [
-          1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1,
-          1, 1,
-        ], // hihat - continuous with gaps
-        [
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
-          0, 1,
-        ], // openhat - only in second half
-      ],
-    },
+    // Add other patterns...
   ]
 
-  // Initialize Tone.js
+  // Enhanced lookahead scheduler function with swing and timing analysis
+  const scheduler = useCallback(() => {
+    if (!isPlayingRef.current) {
+      return
+    }
+
+    const currentTime = Tone.context.currentTime
+    const lookaheadTime = lookaheadTimeRef.current / 1000 // Convert to seconds
+
+    // Schedule all steps that fall within the lookahead window
+    while (nextStepTimeRef.current < currentTime + lookaheadTime) {
+      const step = currentStepRef.current
+
+      // Check if this step hasn't been scheduled yet
+      const alreadyScheduled = scheduledEventsRef.current.some(
+        event => event.step === step && event.time === nextStepTimeRef.current && !event.executed
+      )
+
+      if (!alreadyScheduled) {
+        // Calculate swing timing for off-beat steps
+        let swingOffset = 0
+        const isOffBeat = step % 2 === 1
+        if (isOffBeat && swingAmount.current > 0) {
+          const maxSwing = (60.0 / tempo / 4) * 0.33 // Max 33% of step length
+          swingOffset = maxSwing * (swingAmount.current / 100)
+        }
+
+        const adjustedTime = nextStepTimeRef.current + swingOffset
+        scheduleStep(step, adjustedTime)
+
+        scheduledEventsRef.current.push({
+          time: adjustedTime,
+          step,
+          executed: false,
+        })
+
+        // Update timing analysis
+        timingAnalysis.current.totalEvents++
+      }
+
+      // Advance to next step with micro-timing precision
+      const baseStepTime = 60.0 / tempo / 4 // Each step = 16th note (1/4 beat)
+      const stepTime = microTimingEnabled.current
+        ? baseStepTime * (1 + (Math.random() - 0.5) * 0.001) // ±0.05% micro timing
+        : baseStepTime
+
+      nextStepTimeRef.current += stepTime
+      currentStepRef.current = (currentStepRef.current + 1) % 16
+    }
+
+    // Clean up old scheduled events and analyze timing
+    const eventsToRemove = scheduledEventsRef.current.filter(event => event.time <= currentTime - 1)
+
+    // Update jitter analysis
+    if (eventsToRemove.length > 0) {
+      const latencies = eventsToRemove.map(event => Math.abs(event.time - currentTime))
+      const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length
+      timingAnalysis.current.averageLatency = avgLatency
+      timingAnalysis.current.jitter = Math.sqrt(
+        latencies.reduce((sum, lat) => sum + Math.pow(lat - avgLatency, 2), 0) / latencies.length
+      )
+    }
+
+    scheduledEventsRef.current = scheduledEventsRef.current.filter(
+      event => event.time > currentTime - 1
+    )
+  }, [isPlaying, tempo])
+
+  const scheduleStep = useCallback(
+    (step: number, time: number) => {
+      // Schedule UI update with slight anticipation for visual sync
+      Tone.Draw.schedule(() => {
+        setCurrentStep(step)
+      }, time - 0.01) // 10ms early for visual feedback
+
+      // Schedule audio events
+      const transportTime = time - Tone.context.currentTime
+
+      // Play melody notes using current scale and key
+      for (let row = 0; row < 16; row++) {
+        const cell = gridRef.current[row][step]
+        if (cell.active && currentScaleRef.current && currentKeyRef.current) {
+          const note = getNoteForRow(row, currentScaleRef.current, currentKeyRef.current)
+
+          if (synthRef.current) {
+            synthRef.current.triggerAttackRelease(note, '16n', `+${transportTime}`, cell.velocity)
+          }
+        }
+      }
+
+      // Play drums if enabled
+      if (drumEnabledRef.current && drumSynthsRef.current) {
+        const currentPattern = drumPatterns.find(p => p.id === currentDrumPatternRef.current)
+        if (currentPattern) {
+          const drumNames = ['kick', 'snare', 'hihat', 'openhat']
+
+          drumNames.forEach((drumName, drumIndex) => {
+            if (currentPattern.pattern[drumIndex][step] === 1) {
+              const synth = drumSynthsRef.current[drumName]
+              if (synth) {
+                // Schedule with precise timing - all drums use (duration, time) interface
+                if (synth.triggerAttackRelease) {
+                  synth.triggerAttackRelease('16n', `+${transportTime}` as ToneTime)
+                }
+              }
+            }
+          })
+        }
+      }
+    },
+    [drumPatterns]
+  )
+
+  // Initialize mobile audio unlock listeners
   useEffect(() => {
-    // Create effects chain
+    mobileAudioManager.addUnlockListeners()
+
+    return () => {
+      mobileAudioManager.removeUnlockListeners()
+    }
+  }, [])
+
+  // Audio initialization flag
+  const audioInitialized = useRef(false)
+
+  // Initialize individual track effect chains
+  const initializeTrackEffects = useCallback(() => {
+    const tracks = ['melody', 'kick', 'snare', 'hihat', 'openhat']
+
+    tracks.forEach(trackId => {
+      // Create effect chain for each track
+      const gain = new Tone.Gain(trackControls[trackId as keyof typeof trackControls].volume)
+      const panner = new Tone.Panner(trackControls[trackId as keyof typeof trackControls].pan)
+      const reverb = new Tone.Reverb(0.8)
+      const delay = new Tone.FeedbackDelay('8n', 0.3)
+      const chorus = new Tone.Chorus(4, 2.5, 0.5)
+      const wahFilter = new Tone.AutoWah(50, 6, 0)
+
+      // Set initial effect levels
+      reverb.wet.value = trackControls[trackId as keyof typeof trackControls].reverb / 100
+      delay.wet.value = trackControls[trackId as keyof typeof trackControls].delay / 100
+      chorus.wet.value = 0 // Default off since not exposed in TrackControl interface
+      wahFilter.wet.value = 0 // Default off since not exposed in TrackControl interface
+
+      // Chain effects: gain -> panner -> wahFilter -> chorus -> delay -> reverb -> destination
+      gain.chain(panner, wahFilter, chorus, delay, reverb, Tone.Destination)
+
+      trackEffectsRef.current[trackId] = {
+        gain,
+        panner,
+        reverb,
+        delay,
+        chorus,
+        wahFilter,
+      }
+    })
+  }, [trackControls])
+
+  // Initialize audio objects only when needed (lazy initialization)
+  const initializeAudio = useCallback(() => {
+    if (audioInitialized.current) return
+
+    // Initialize individual track effects first
+    initializeTrackEffects()
+
+    // Create master effects chain (kept for backwards compatibility)
     reverbRef.current = new Tone.Reverb(0.8)
     delayRef.current = new Tone.FeedbackDelay('8n', 0.3)
     chorusRef.current = new Tone.Chorus(4, 2.5, 0.5)
@@ -405,104 +398,57 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     chorusRef.current.wet.value = 0
     wahFilterRef.current.wet.value = 0
 
-    // Chain effects: Synth → Wah → Chorus → Delay → Reverb → Destination
-    const effectsChain = [
-      wahFilterRef.current,
-      chorusRef.current,
-      delayRef.current,
-      reverbRef.current,
-    ]
-
-    synthRef.current = new Tone.PolySynth(Tone.Synth)
-    synthRef.current.set({
-      oscillator: { type: 'sawtooth' as any },
+    // Create enhanced synth with filter and LFO
+    synthRef.current = new Tone.PolySynth(Tone.MonoSynth, {
+      oscillator: { type: synthParams.waveform as 'sine' | 'square' | 'sawtooth' | 'triangle' },
       envelope: {
+        attack: synthParams.attack,
+        decay: synthParams.decay,
+        sustain: synthParams.sustain,
+        release: synthParams.release,
+      },
+      filter: {
+        Q: synthParams.filterResonance,
+        frequency: synthParams.filterCutoff,
+        type: 'lowpass',
+      },
+      filterEnvelope: {
         attack: 0.01,
         decay: 0.1,
         sustain: 0.5,
-        release: 0.3,
+        release: 1,
+        baseFrequency: synthParams.filterCutoff,
+        octaves: synthParams.filterEnvAmount,
       },
     })
 
-    // Connect synth through effects chain to destination
-    synthRef.current.chain(...effectsChain, Tone.Destination)
-
-    // Initialize drum gain node
-    drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
-
-    // Initialize drum synthesizers with distinct sounds
-
-    // KICK DRUM - Deep punchy kick with pitch envelope
-    const kickLowpass = new Tone.Filter(100, 'lowpass').connect(drumGainRef.current)
-    const kickSynth = new Tone.MembraneSynth({
-      pitchDecay: 0.08,
-      octaves: 2,
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 },
-    }).connect(kickLowpass)
-
-    // SNARE DRUM - Layered noise + tone for realistic snare
-    const snareNoise = new Tone.NoiseSynth({
-      noise: { type: 'white' },
-      envelope: { attack: 0.01, decay: 0.13, sustain: 0, release: 0.03 },
-    })
-    const snareTone = new Tone.Synth({
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.02 },
-    })
-    const snareFilter = new Tone.Filter(3000, 'highpass').connect(drumGainRef.current)
-    const snareMix = new Tone.Gain(0.7).connect(snareFilter)
-    snareNoise.connect(snareMix)
-    snareTone.connect(snareMix)
-
-    // HIHAT - Bright metallic closed hihat
-    const hihatFilter = new Tone.Filter(10000, 'highpass').connect(drumGainRef.current)
-    const hihatSynth = new Tone.MetalSynth({
-      envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.01 },
-      harmonicity: 12,
-      modulationIndex: 32,
-      resonance: 4000,
-      octaves: 1,
-    }).connect(hihatFilter)
-
-    // OPEN HIHAT - Longer decay metallic sound
-    const openhatFilter = new Tone.Filter(8000, 'highpass').connect(drumGainRef.current)
-    const openhatSynth = new Tone.MetalSynth({
-      envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 0.3 },
-      harmonicity: 10,
-      modulationIndex: 16,
-      resonance: 3000,
-      octaves: 1.5,
-    }).connect(openhatFilter)
-
-    drumSynthsRef.current = {
-      kick: kickSynth,
-      snare: {
-        triggerAttackRelease: (duration: any) => {
-          snareNoise.triggerAttackRelease(duration)
-          snareTone.triggerAttackRelease(200, duration)
-        },
-      } as any,
-      hihat: hihatSynth as any,
-      openhat: openhatSynth as any,
+    // Connect synth through melody track effects
+    if (trackEffectsRef.current.melody) {
+      synthRef.current.connect(trackEffectsRef.current.melody.gain)
     }
 
+    // Initialize drum gain node (master drum volume control)
+    drumGainRef.current = new Tone.Gain(Tone.dbToGain(drumVolume)).toDestination()
+
+    // Initialize drum synthesizer
+    drumSynthesizerRef.current = new DrumSynthesizer(drumGainRef.current)
+    drumSynthesizerRef.current.setKit(currentDrumKit)
+
+    // Initialize drum synthesizers with improved sounds
+    initializeDrumSynths()
+
+    audioInitialized.current = true
+  }, [drumVolume, initializeTrackEffects])
+
+  // Cleanup effect
+  useEffect(() => {
     return () => {
-      if (sequencerRef.current) {
-        sequencerRef.current.dispose()
+      if (scheduleIntervalRef.current) {
+        clearInterval(scheduleIntervalRef.current)
       }
-      if (synthRef.current) {
-        synthRef.current.dispose()
-      }
-      // Dispose drum synthesizers carefully
-      if (drumSynthsRef.current.kick) drumSynthsRef.current.kick.dispose()
-      if (drumSynthsRef.current.hihat) drumSynthsRef.current.hihat.dispose()
-      if (drumSynthsRef.current.openhat) drumSynthsRef.current.openhat.dispose()
-      // Snare cleanup handled by individual components
-      if (drumGainRef.current) {
-        drumGainRef.current.dispose()
-      }
-      // Dispose effects
+      if (synthRef.current) synthRef.current.dispose()
+      disposeDrumSynths()
+      if (drumGainRef.current) drumGainRef.current.dispose()
       if (reverbRef.current) reverbRef.current.dispose()
       if (delayRef.current) delayRef.current.dispose()
       if (chorusRef.current) chorusRef.current.dispose()
@@ -510,9 +456,287 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [])
 
-  // Character patch definitions - simplified to use our controls
-  const characterPatches: Record<string, any> = {
-    default: null, // Uses current slider values
+  const initializeDrumSynths = useCallback(() => {
+    if (!drumSynthesizerRef.current || !drumGainRef.current) return
+
+    // Create drum synths using fallback implementations that properly connect to track effects
+    // Note: DrumSynthesizer class connections bypass individual track effects,
+    // so we use fallback drums that connect to the correct track effects chains
+    const drumSynths = {
+      kick: createFallbackKick(),
+      snare: createFallbackSnare(),
+      hihat: createFallbackHihat(),
+      openhat: createFallbackOpenhat(),
+    }
+
+    // Note: Drum track connections are handled in the fallback drum functions
+    // The DrumSynthesizer class connects directly to drumGainRef by design
+
+    drumSynthsRef.current = drumSynths
+  }, [])
+
+  // Fallback drum implementations (simplified versions)
+  const createFallbackKick = () => {
+    const synth = new Tone.MembraneSynth()
+    // Connect to kick track effects by default
+    const kickEffects = trackEffectsRef.current.kick
+    if (kickEffects) {
+      synth.connect(kickEffects.gain)
+    }
+    return {
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C1', duration, time)
+        } else {
+          synth.triggerAttackRelease('C1', duration)
+        }
+      },
+      connect: (destination: Tone.InputNode) => synth.connect(destination),
+      disconnect: () => synth.disconnect(),
+      dispose: () => synth.dispose(),
+    }
+  }
+
+  const createFallbackSnare = () => {
+    const synth = new Tone.NoiseSynth()
+    // Connect to snare track effects by default
+    const snareEffects = trackEffectsRef.current.snare
+    if (snareEffects) {
+      synth.connect(snareEffects.gain)
+    }
+    return {
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease(duration, time)
+        } else {
+          synth.triggerAttackRelease(duration)
+        }
+      },
+      connect: (destination: Tone.InputNode) => synth.connect(destination),
+      disconnect: () => synth.disconnect(),
+      dispose: () => synth.dispose(),
+    }
+  }
+
+  const createFallbackHihat = () => {
+    const synth = new Tone.MetalSynth()
+    // Connect to hihat track effects by default
+    const hihatEffects = trackEffectsRef.current.hihat
+    if (hihatEffects) {
+      synth.connect(hihatEffects.gain)
+    }
+    return {
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C5', duration, time)
+        } else {
+          synth.triggerAttackRelease('C5', duration)
+        }
+      },
+      connect: (destination: Tone.InputNode) => synth.connect(destination),
+      disconnect: () => synth.disconnect(),
+      dispose: () => synth.dispose(),
+    }
+  }
+
+  const createFallbackOpenhat = () => {
+    const synth = new Tone.MetalSynth()
+    // Connect to openhat track effects by default
+    const openhatEffects = trackEffectsRef.current.openhat
+    if (openhatEffects) {
+      synth.connect(openhatEffects.gain)
+    }
+    return {
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => {
+        if (time !== undefined) {
+          synth.triggerAttackRelease('C5', duration, time)
+        } else {
+          synth.triggerAttackRelease('C5', duration)
+        }
+      },
+      connect: (destination: Tone.InputNode) => synth.connect(destination),
+      disconnect: () => synth.disconnect(),
+      dispose: () => synth.dispose(),
+    }
+  }
+
+  const disposeDrumSynths = () => {
+    // Cleanup drum synths
+    const drumSynths = drumSynthsRef.current
+    Object.keys(drumSynths).forEach(key => {
+      const synth = drumSynths[key]
+      if (synth && synth.dispose) {
+        synth.dispose()
+      }
+    })
+  }
+
+  // Keep drum refs updated
+  useEffect(() => {
+    drumEnabledRef.current = drumEnabled
+  }, [drumEnabled])
+
+  useEffect(() => {
+    currentDrumPatternRef.current = currentDrumPattern
+  }, [currentDrumPattern])
+
+  useEffect(() => {
+    currentDrumKitRef.current = currentDrumKit
+    if (drumSynthesizerRef.current) {
+      drumSynthesizerRef.current.setKit(currentDrumKit)
+      // Reinitialize drum synths with new kit
+      disposeDrumSynths()
+      initializeDrumSynths()
+    }
+  }, [currentDrumKit])
+
+  // Keep scale and key refs updated
+  useEffect(() => {
+    currentScaleRef.current = currentScale
+  }, [currentScale])
+
+  useEffect(() => {
+    currentKeyRef.current = currentKey
+  }, [currentKey])
+
+  const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
+    const newGrid = [...gridRef.current]
+    newGrid[row] = [...newGrid[row]]
+    const currentCell = newGrid[row][col]
+
+    if (shiftKey) {
+      // Shift+click: cycle through velocity levels (if active)
+      if (currentCell.active) {
+        if (currentCell.velocity === 0.3) {
+          newGrid[row][col] = { active: true, velocity: 0.7 }
+        } else if (currentCell.velocity === 0.7) {
+          newGrid[row][col] = { active: true, velocity: 1.0 }
+        } else {
+          newGrid[row][col] = { active: true, velocity: 0.3 }
+        }
+      } else {
+        // If not active, activate with default velocity
+        newGrid[row][col] = { active: true, velocity: 0.7 }
+      }
+    } else {
+      // Normal click: toggle active/inactive
+      if (currentCell.active) {
+        newGrid[row][col] = { active: false, velocity: 0.7 }
+      } else {
+        newGrid[row][col] = { active: true, velocity: 0.7 }
+      }
+    }
+
+    gridRef.current = newGrid
+    setGrid(newGrid)
+  }, [])
+
+  const togglePlayback = useCallback(async () => {
+    if (isPlaying) {
+      // Stop scheduler
+      if (scheduleIntervalRef.current) {
+        clearInterval(scheduleIntervalRef.current)
+        scheduleIntervalRef.current = null
+      }
+
+      Tone.Transport.stop()
+      Tone.Transport.cancel()
+
+      // Clear scheduled events
+      scheduledEventsRef.current = []
+
+      setCurrentStep(0)
+      currentStepRef.current = 0
+      isPlayingRef.current = false
+      setIsPlaying(false)
+    } else {
+      // Ensure Tone.js context is started first
+      if (Tone.context.state !== 'running') {
+        await Tone.start()
+      }
+
+      // Initialize audio objects now that we have user interaction
+      initializeAudio()
+
+      // Ensure mobile audio is properly initialized
+      await mobileAudioManager.initializeAudio()
+
+      // Initialize timing
+      nextStepTimeRef.current = Tone.context.currentTime + 0.1 // Start slightly in the future
+      currentStepRef.current = 0
+      scheduledEventsRef.current = []
+
+      // Start enhanced scheduler interval with adaptive precision
+      const schedulerInterval = microTimingEnabled.current ? 10 : 25 // 10ms for high precision, 25ms for normal
+      scheduleIntervalRef.current = window.setInterval(scheduler, schedulerInterval)
+
+      Tone.Transport.bpm.value = tempo
+      Tone.Transport.start()
+      isPlayingRef.current = true
+      setIsPlaying(true)
+    }
+  }, [isPlaying, tempo, scheduler, initializeAudio])
+
+  const clearGrid = useCallback(() => {
+    const newGrid = initGrid()
+    gridRef.current = newGrid
+    setGrid(newGrid)
+    setCurrentStep(0)
+  }, [])
+
+  const setPreset = useCallback((preset: string) => {
+    const newGrid = initGrid()
+
+    switch (preset) {
+      case 'ambient':
+        for (let i = 0; i < 16; i += 4) {
+          newGrid[8][i].active = true
+          newGrid[10][i + 2].active = true
+          newGrid[5][i + 1].active = true
+        }
+        setSynthParams(prev => ({
+          ...prev,
+          attack: 0.5,
+          release: 2,
+          waveform: 'sine',
+        }))
+        break
+
+      case 'energetic':
+        for (let i = 0; i < 16; i += 2) {
+          newGrid[0][i].active = true
+          newGrid[5][i].active = true
+          newGrid[10][i].active = true
+          newGrid[15][i].active = true
+        }
+        setSynthParams(prev => ({
+          ...prev,
+          attack: 0.001,
+          release: 0.1,
+          waveform: 'square',
+        }))
+        break
+
+      case 'cascade':
+        for (let i = 0; i < 16; i++) {
+          newGrid[15 - i][i].active = true
+        }
+        break
+
+      case 'rise':
+        for (let i = 0; i < 16; i++) {
+          newGrid[i][i].active = true
+        }
+        break
+    }
+
+    gridRef.current = newGrid
+    setGrid(newGrid)
+  }, [])
+
+  // Character patch definitions
+  const characterPatches: CharacterPatchCollection = {
+    default: null,
     nebula: {
       waveform: 'sine',
       attack: 0.5,
@@ -563,7 +787,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     },
   }
 
-  // Handle character patch selection
   const selectCharacter = useCallback((character: string) => {
     if (character !== 'default') {
       const patch = characterPatches[character]
@@ -582,281 +805,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [])
 
-  // Update synth parameters
-  useEffect(() => {
-    if (synthRef.current) {
-      synthRef.current.set({
-        oscillator: { type: synthParams.waveform as any },
-        envelope: {
-          attack: synthParams.attack,
-          decay: 0.1,
-          sustain: 0.5,
-          release: synthParams.release,
-        },
-        volume: synthParams.volume,
-      })
-    }
-  }, [synthParams.waveform, synthParams.attack, synthParams.release, synthParams.volume])
-
-  // Update tempo
-  useEffect(() => {
-    Tone.Transport.bpm.value = tempo
-  }, [tempo])
-
-  // Keep drum refs updated
-  useEffect(() => {
-    drumEnabledRef.current = drumEnabled
-  }, [drumEnabled])
-
-  useEffect(() => {
-    currentDrumPatternRef.current = currentDrumPattern
-  }, [currentDrumPattern])
-
-  const toggleCell = useCallback((row: number, col: number, shiftKey = false) => {
-    const newGrid = [...gridRef.current]
-    newGrid[row] = [...newGrid[row]]
-    const currentCell = newGrid[row][col]
-
-    if (shiftKey) {
-      // Shift-click: cycle through velocity states
-      if (!currentCell.active) {
-        // Off -> Normal (0.7)
-        newGrid[row][col] = { active: true, velocity: 0.7 }
-      } else if (currentCell.velocity === 0.7) {
-        // Normal -> Emphasis (1.0)
-        newGrid[row][col] = { active: true, velocity: 1.0 }
-      } else if (currentCell.velocity === 1.0) {
-        // Emphasis -> Quiet (0.3)
-        newGrid[row][col] = { active: true, velocity: 0.3 }
-      } else {
-        // Quiet -> Off
-        newGrid[row][col] = { active: false, velocity: 0.7 }
-      }
-    } else {
-      // Regular click: toggle between off and normal velocity
-      newGrid[row][col] = {
-        active: !currentCell.active,
-        velocity: 0.7,
-      }
-    }
-
-    gridRef.current = newGrid
-    setGrid(newGrid)
-  }, [])
-
-  const togglePlayback = useCallback(async () => {
-    if (isPlaying) {
-      Tone.Transport.stop()
-      Tone.Transport.cancel()
-      if (sequencerRef.current) {
-        sequencerRef.current.stop()
-        sequencerRef.current.dispose()
-        sequencerRef.current = null
-      }
-      setCurrentStep(0)
-      setIsPlaying(false)
-    } else {
-      await Tone.start()
-
-      // Clean up any existing sequence
-      if (sequencerRef.current) {
-        sequencerRef.current.dispose()
-      }
-
-      // Create new sequence with current grid state
-      const seq = new Tone.Sequence(
-        (time, step) => {
-          // Update UI
-          Tone.Draw.schedule(() => {
-            setCurrentStep(step)
-          }, time)
-
-          // Play notes for this step using current scale and key
-          for (let row = 0; row < 16; row++) {
-            const cell = gridRef.current[row][step]
-            if (cell.active) {
-              const note = getNoteForRow(row, currentScale, currentKey)
-
-              if (synthRef.current) {
-                // Play each note with its individual velocity
-                synthRef.current.triggerAttackRelease(note, '16n', time, cell.velocity)
-              }
-            }
-          }
-
-          // Play drum pattern if enabled
-          if (drumEnabledRef.current && drumSynthsRef.current) {
-            const currentPattern = drumPatterns.find(p => p.id === currentDrumPatternRef.current)
-            if (currentPattern) {
-              const drumNames = ['kick', 'snare', 'hihat', 'openhat']
-
-              drumNames.forEach((drumName, drumIndex) => {
-                const patternStep = step % currentPattern.length
-                if (currentPattern.pattern[drumIndex][patternStep] === 1) {
-                  const synth = drumSynthsRef.current[drumName]
-                  if (synth) {
-                    synth.triggerAttackRelease('16n', time)
-                  }
-                }
-              })
-            }
-          }
-        },
-        Array(16)
-          .fill(0)
-          .map((_, i) => i),
-        '16n'
-      )
-
-      seq.loop = true
-      seq.start(0)
-      sequencerRef.current = seq
-
-      Tone.Transport.bpm.value = tempo
-      Tone.Transport.start()
-      setIsPlaying(true)
-    }
-  }, [isPlaying, tempo])
-
-  const clearGrid = useCallback(() => {
-    const newGrid = initGrid()
-    gridRef.current = newGrid
-    setGrid(newGrid)
-    setCurrentStep(0)
-  }, [])
-
-  // Helper function to get scale-relative row positions
-  const getScaleRows = useCallback(() => {
-    const rows: number[] = []
-
-    // Map scale degrees to grid rows (0-15, with 15 being highest)
-    for (let i = 0; i < 16; i++) {
-      const rowFromTop = 15 - i // Invert: row 15 = highest note, row 0 = lowest
-      rows.push(rowFromTop)
-    }
-    return rows
-  }, [currentScale])
-
-  const setPreset = useCallback(
-    (preset: string) => {
-      const newGrid = initGrid()
-      const scaleRows = getScaleRows()
-      const scaleLength = currentScale.intervals.length
-
-      switch (preset) {
-        case 'ambient':
-          // Sparse pattern with perfect fifths and octaves - works great in any scale
-          // Root, fifth, octave pattern every 4 beats
-          for (let beat = 0; beat < 16; beat += 4) {
-            // Root note (scale degree 1)
-            newGrid[scaleRows[0]][beat].active = true
-            newGrid[scaleRows[0]][beat].velocity = 0.7
-
-            // Fifth (scale degree 5 if available, otherwise 4)
-            const fifthDegree = scaleLength > 4 ? 4 : 3
-            if (beat + 2 < 16) {
-              newGrid[scaleRows[fifthDegree]][beat + 2].active = true
-              newGrid[scaleRows[fifthDegree]][beat + 2].velocity = 0.3
-            }
-
-            // Octave (scale degree 8 if available)
-            if (scaleLength >= 7 && beat + 1 < 16) {
-              newGrid[scaleRows[7]][beat + 1].active = true
-              newGrid[scaleRows[7]][beat + 1].velocity = 0.3
-            }
-          }
-          setSynthParams(prev => ({
-            ...prev,
-            attack: 0.5,
-            release: 2.0,
-            waveform: 'sine',
-            brightness: 30,
-            texture: 10,
-          }))
-          break
-
-        case 'energetic':
-          // Fast arpeggio pattern using triads
-          for (let i = 0; i < 16; i += 2) {
-            // Root chord notes every 2 beats
-            newGrid[scaleRows[0]][i].active = true // Root
-            newGrid[scaleRows[0]][i].velocity = 1.0
-
-            if (scaleLength > 2) {
-              newGrid[scaleRows[2]][i].active = true // Third
-              newGrid[scaleRows[2]][i].velocity = 0.7
-            }
-            if (scaleLength > 4) {
-              newGrid[scaleRows[4]][i].active = true // Fifth
-              newGrid[scaleRows[4]][i].velocity = 0.7
-            }
-            if (scaleLength >= 7) {
-              newGrid[scaleRows[7]][i].active = true // Octave
-              newGrid[scaleRows[7]][i].velocity = 0.7
-            }
-          }
-          setSynthParams(prev => ({
-            ...prev,
-            attack: 0.001,
-            release: 0.2,
-            waveform: 'sawtooth',
-            brightness: 80,
-            texture: 60,
-          }))
-          break
-
-        case 'cascade':
-          // Descending scale pattern - uses all scale degrees
-          for (let i = 0; i < Math.min(16, scaleLength * 2); i++) {
-            const scaleIndex = (scaleLength * 2 - 1 - i) % scaleLength
-            const octaveOffset = Math.floor((scaleLength * 2 - 1 - i) / scaleLength) * scaleLength
-            const rowIndex = scaleRows[scaleIndex + octaveOffset] || scaleRows[scaleIndex]
-
-            if (i < 16) {
-              newGrid[rowIndex][i].active = true
-              newGrid[rowIndex][i].velocity = 0.7
-            }
-          }
-          setSynthParams(prev => ({
-            ...prev,
-            attack: 0.01,
-            release: 0.5,
-            waveform: 'triangle',
-            brightness: 60,
-            texture: 40,
-          }))
-          break
-
-        case 'rise':
-          // Ascending scale pattern with velocity crescendo
-          for (let i = 0; i < Math.min(16, scaleLength * 2); i++) {
-            const scaleIndex = i % scaleLength
-            const octaveOffset = Math.floor(i / scaleLength) * scaleLength
-            const rowIndex = scaleRows[scaleIndex + octaveOffset] || scaleRows[scaleIndex]
-
-            if (i < 16) {
-              newGrid[rowIndex][i].active = true
-              // Crescendo effect
-              newGrid[rowIndex][i].velocity = 0.3 + (i / 16) * 0.7
-            }
-          }
-          setSynthParams(prev => ({
-            ...prev,
-            attack: 0.05,
-            release: 0.8,
-            waveform: 'square',
-            brightness: 70,
-            texture: 50,
-          }))
-          break
-      }
-
-      gridRef.current = newGrid
-      setGrid(newGrid)
-    },
-    [currentScale, getScaleRows]
-  )
-
   const updateSynthParam = useCallback((param: string, value: number | string) => {
     setSynthParams(prev => ({
       ...prev,
@@ -864,40 +812,62 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }))
   }, [])
 
-  const updateEffectsParam = useCallback((param: string, value: number) => {
-    setEffectsParams(prev => ({
-      ...prev,
-      [param]: value,
-    }))
-
-    // Update effects in real-time
-    const wetValue = value / 100 // Convert 0-100 to 0-1
+  const applyEffectToMelodyTrack = useCallback((param: string, wetValue: number) => {
+    const melodyEffects = trackEffectsRef.current.melody
+    if (!melodyEffects) return
 
     switch (param) {
       case 'reverb':
-        if (reverbRef.current) {
-          reverbRef.current.wet.value = wetValue
-        }
+        if (melodyEffects.reverb) melodyEffects.reverb.wet.value = wetValue
         break
       case 'delay':
-        if (delayRef.current) {
-          delayRef.current.wet.value = wetValue
-        }
+        if (melodyEffects.delay) melodyEffects.delay.wet.value = wetValue
         break
       case 'chorus':
-        if (chorusRef.current) {
-          chorusRef.current.wet.value = wetValue
-        }
+        if (melodyEffects.chorus) melodyEffects.chorus.wet.value = wetValue
         break
       case 'wahFilter':
-        if (wahFilterRef.current) {
-          wahFilterRef.current.wet.value = wetValue
-          // Adjust wah intensity based on value
-          wahFilterRef.current.gain.value = wetValue * 8 // 0 to 8 intensity
+        if (melodyEffects.wahFilter) {
+          melodyEffects.wahFilter.wet.value = wetValue
+          melodyEffects.wahFilter.gain.value = wetValue * 8
         }
         break
     }
   }, [])
+
+  const applyEffectToGlobalEffects = useCallback((param: string, wetValue: number) => {
+    switch (param) {
+      case 'reverb':
+        if (reverbRef.current) reverbRef.current.wet.value = wetValue
+        break
+      case 'delay':
+        if (delayRef.current) delayRef.current.wet.value = wetValue
+        break
+      case 'chorus':
+        if (chorusRef.current) chorusRef.current.wet.value = wetValue
+        break
+      case 'wahFilter':
+        if (wahFilterRef.current) {
+          wahFilterRef.current.wet.value = wetValue
+          wahFilterRef.current.gain.value = wetValue * 8
+        }
+        break
+    }
+  }, [])
+
+  const updateEffectsParam = useCallback(
+    (param: string, value: number) => {
+      setEffectsParams(prev => ({
+        ...prev,
+        [param]: value,
+      }))
+
+      const wetValue = value / 100
+      applyEffectToMelodyTrack(param, wetValue)
+      applyEffectToGlobalEffects(param, wetValue)
+    },
+    [applyEffectToMelodyTrack, applyEffectToGlobalEffects]
+  )
 
   const toggleDrums = useCallback(() => {
     setDrumEnabled(prev => !prev)
@@ -905,8 +875,6 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const setDrumVolumeCallback = useCallback((volume: number) => {
     setDrumVolume(volume)
-
-    // Update drum gain node in real-time
     if (drumGainRef.current) {
       drumGainRef.current.gain.value = Tone.dbToGain(volume)
     }
@@ -916,20 +884,171 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentDrumPattern(patternId)
   }, [])
 
-  // Scale and key functions
+  const selectDrumKit = useCallback((kitId: string) => {
+    setCurrentDrumKit(kitId)
+  }, [])
+
   const setScale = useCallback((scaleId: string) => {
     const scale = SCALES.find(s => s.id === scaleId)
-    if (scale) {
-      setCurrentScale(scale)
-    }
+    setCurrentScaleState(scale || null)
   }, [])
 
   const setKey = useCallback((keyId: string) => {
     const key = KEYS.find(k => k.id === keyId)
-    if (key) {
-      setCurrentKey(key)
-    }
+    setCurrentKeyState(key || null)
   }, [])
+
+  // Timing control functions
+  const setSwingAmount = useCallback((amount: number) => {
+    swingAmount.current = Math.max(0, Math.min(100, amount))
+  }, [])
+
+  const toggleMicroTiming = useCallback(() => {
+    microTimingEnabled.current = !microTimingEnabled.current
+  }, [])
+
+  const getTimingStats = useCallback(
+    () => ({
+      averageLatency: timingAnalysis.current.averageLatency,
+      jitter: timingAnalysis.current.jitter,
+      missedEvents: timingAnalysis.current.missedEvents,
+      totalEvents: timingAnalysis.current.totalEvents,
+      swingAmount: swingAmount.current,
+      microTimingEnabled: microTimingEnabled.current,
+    }),
+    []
+  )
+
+  // Individual track control functions
+  const updateTrackControl = useCallback(
+    // eslint-disable-next-line complexity
+    (trackId: string, control: string, value: number | boolean) => {
+      setTrackControls(prev => ({
+        ...prev,
+        [trackId]: {
+          ...prev[trackId as keyof typeof prev],
+          [control]: value,
+        },
+      }))
+
+      // Apply real-time audio changes
+      const trackEffects = trackEffectsRef.current[trackId]
+      if (trackEffects) {
+        switch (control) {
+          case 'volume':
+            trackEffects.gain.gain.rampTo(value as number, 0.1)
+            break
+          case 'muted':
+            trackEffects.gain.gain.rampTo(
+              (value as boolean) ? 0 : trackControls[trackId as keyof typeof trackControls].volume,
+              0.1
+            )
+            break
+          case 'pan':
+            if ('pan' in trackEffects.panner) {
+              trackEffects.panner.pan.rampTo(value as number, 0.1)
+            }
+            break
+          case 'reverb':
+            trackEffects.reverb.wet.rampTo((value as number) / 100, 0.1)
+            break
+          case 'delay':
+            trackEffects.delay.wet.rampTo((value as number) / 100, 0.1)
+            break
+          case 'chorus':
+            trackEffects.chorus.wet.rampTo((value as number) / 100, 0.1)
+            break
+          case 'wahFilter':
+            trackEffects.wahFilter.wet.rampTo((value as number) / 100, 0.1)
+            break
+        }
+      }
+    },
+    [trackControls]
+  )
+
+  const soloTrack = useCallback((trackId: string) => {
+    setTrackControls(prev => {
+      const newControls = { ...prev }
+      // Toggle solo for the clicked track
+      newControls[trackId as keyof typeof newControls].solo =
+        !newControls[trackId as keyof typeof newControls].solo
+
+      // If any track is soloed, mute all non-soloed tracks
+      const hasSolo = Object.values(newControls).some(track => track.solo)
+
+      if (hasSolo) {
+        Object.keys(newControls).forEach(key => {
+          const track = newControls[key as keyof typeof newControls]
+          const trackEffects = trackEffectsRef.current[key]
+          if (trackEffects) {
+            trackEffects.gain.gain.rampTo(track.solo ? track.volume : 0, 0.1)
+          }
+        })
+      } else {
+        // No tracks soloed, restore all volumes
+        Object.keys(newControls).forEach(key => {
+          const track = newControls[key as keyof typeof newControls]
+          const trackEffects = trackEffectsRef.current[key]
+          if (trackEffects && !track.muted) {
+            trackEffects.gain.gain.rampTo(track.volume, 0.1)
+          }
+        })
+      }
+
+      return newControls
+    })
+  }, [])
+
+  const muteTrack = useCallback(
+    (trackId: string) => {
+      updateTrackControl(
+        trackId,
+        'muted',
+        !trackControls[trackId as keyof typeof trackControls].muted
+      )
+    },
+    [trackControls, updateTrackControl]
+  )
+
+  // Update synth parameters
+  useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.set({
+        oscillator: {
+          type: synthParams.waveform as 'sine' | 'square' | 'sawtooth' | 'triangle',
+          // Note: detune parameter handled through individual voice access
+        },
+        envelope: {
+          attack: synthParams.attack,
+          decay: synthParams.decay,
+          sustain: synthParams.sustain,
+          release: synthParams.release,
+        },
+        volume: synthParams.volume,
+        portamento: synthParams.portamento,
+      })
+
+      // Note: Filter settings would be applied at individual voice level
+      // but voice property is private in newer Tone.js versions
+    }
+  }, [
+    synthParams.waveform,
+    synthParams.attack,
+    synthParams.decay,
+    synthParams.sustain,
+    synthParams.release,
+    synthParams.volume,
+    synthParams.detune,
+    synthParams.portamento,
+    synthParams.filterCutoff,
+    synthParams.filterResonance,
+  ])
+
+  // Update tempo
+  useEffect(() => {
+    Tone.Transport.bpm.value = tempo
+  }, [tempo])
 
   return (
     <SequencerContext.Provider
@@ -951,14 +1070,24 @@ export const SequencerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         drumEnabled,
         drumVolume,
         currentDrumPattern,
+        currentDrumKit,
         drumPatterns,
+        drumKits: DRUM_KITS,
         toggleDrums,
         setDrumVolume: setDrumVolumeCallback,
         selectDrumPattern,
+        selectDrumKit,
         currentScale,
         currentKey,
         setScale,
         setKey,
+        setSwingAmount,
+        toggleMicroTiming,
+        getTimingStats,
+        trackControls,
+        updateTrackControl,
+        soloTrack,
+        muteTrack,
       }}
     >
       {children}

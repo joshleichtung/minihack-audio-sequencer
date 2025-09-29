@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 import { getDisplayNoteForRow } from '../utils/scales'
 import type { CellData, GridCellProps, NoteLabelsProps } from '../types'
 

@@ -1,4 +1,4 @@
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 import type { EffectSliderProps, PresetButtonProps, EffectsPresetsProps } from '../types'
 
 const EffectSlider = ({

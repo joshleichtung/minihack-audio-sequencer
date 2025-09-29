@@ -1,4 +1,4 @@
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 import type {
   DrumToggleButtonProps,
   DrumVolumeControlProps,

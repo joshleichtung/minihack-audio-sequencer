@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function */
 
 /* eslint-disable security/detect-object-injection */
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 
 const TrackMixer = (): React.JSX.Element => {
   const { trackControls, updateTrackControl, soloTrack, muteTrack } = useSequencer()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSequencer } from '../context/SequencerContextImproved'
+import { useSequencer } from '../context/SequencerContext'
 import type { VisualizerProps } from '../types'
 
 const Visualizer = ({ side }: VisualizerProps): React.JSX.Element => {
