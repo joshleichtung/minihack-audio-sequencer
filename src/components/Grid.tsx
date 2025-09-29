@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useSequencer } from '../context/SequencerContextImproved'
 import { useEffect, useState } from 'react'
 import type { Scale, Key } from '../utils/scales'

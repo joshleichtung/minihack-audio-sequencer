@@ -7,8 +7,42 @@ export interface DrumKit {
   description: string
 }
 
+// Tone.js duration notation types
+export type ToneDuration =
+  | '1n'
+  | '2n'
+  | '4n'
+  | '8n'
+  | '16n'
+  | '32n'
+  | '64n' // Note values
+  | '1n.'
+  | '2n.'
+  | '4n.'
+  | '8n.'
+  | '16n.'
+  | '32n.' // Dotted notes
+  | '1t'
+  | '2t'
+  | '4t'
+  | '8t'
+  | '16t'
+  | '32t' // Triplets
+  | '1m'
+  | '2m'
+  | '4m'
+  | '8m' // Measures
+
+// Tone.js time notation types (can be duration or transport time with + prefix)
+export type ToneTime =
+  | ToneDuration
+  | `+${ToneDuration}` // Relative time (e.g., "+16n")
+  | `+${number}` // Relative seconds (e.g., "+0.5")
+  | `${number}:${number}:${number}` // Transport time (BARS:QUARTERS:SIXTEENTHS)
+  | number // Absolute time in seconds
+
 export interface DrumSynth {
-  triggerAttackRelease: (duration: string, time?: string) => void
+  triggerAttackRelease: (duration: ToneDuration, time?: ToneTime) => void
   dispose: () => void
 }
 
@@ -38,11 +72,14 @@ export class DrumSynthesizer {
     this.kit = kitId
   }
 
-  private createDrumSynth(components: DrumComponents): DrumSynth {
+  private createDrumSynthFromComponents(components: DrumComponents): DrumSynth {
     return {
-      triggerAttackRelease: (duration: string, time?: string): void => {
-        const triggerTime = time || undefined
-        components.envelopes.forEach(env => env.triggerAttackRelease(duration, triggerTime))
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime): void => {
+        if (time !== undefined) {
+          components.envelopes.forEach(env => env.triggerAttackRelease(duration, time))
+        } else {
+          components.envelopes.forEach(env => env.triggerAttackRelease(duration))
+        }
       },
       dispose: (): void => {
         components.envelopes.forEach(env => env.dispose())
@@ -90,7 +127,7 @@ export class DrumSynthesizer {
   }
 
   create808Kick(): DrumSynth {
-    return this.createDrumSynth(this.create808KickComponents())
+    return this.createDrumSynthFromComponents(this.create808KickComponents())
   }
 
   private create909KickComponents(): DrumComponents {
@@ -139,11 +176,15 @@ export class DrumSynthesizer {
   create909Kick(): DrumSynth {
     const components = this.create909KickComponents()
     return {
-      triggerAttackRelease: (duration: string, time?: string): void => {
-        const triggerTime = time || undefined
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime): void => {
         // Click envelope uses fixed '8n' duration, body envelope uses provided duration
-        components.envelopes[0].triggerAttackRelease('8n', triggerTime) // click
-        components.envelopes[1].triggerAttackRelease(duration, triggerTime) // body
+        if (time !== undefined) {
+          components.envelopes[0].triggerAttackRelease('8n', time) // click
+          components.envelopes[1].triggerAttackRelease(duration, time) // body
+        } else {
+          components.envelopes[0].triggerAttackRelease('8n') // click
+          components.envelopes[1].triggerAttackRelease(duration) // body
+        }
       },
       dispose: (): void => {
         components.envelopes.forEach(env => env.dispose())
@@ -199,7 +240,7 @@ export class DrumSynthesizer {
   }
 
   create808Snare(): DrumSynth {
-    return this.createDrumSynth(this.create808SnareComponents())
+    return this.createDrumSynthFromComponents(this.create808SnareComponents())
   }
 
   private create909SnareComponents(): DrumComponents {
@@ -246,7 +287,7 @@ export class DrumSynthesizer {
   }
 
   create909Snare(): DrumSynth {
-    return this.createDrumSynth(this.create909SnareComponents())
+    return this.createDrumSynthFromComponents(this.create909SnareComponents())
   }
 
   private create808HihatComponents(): DrumComponents {
@@ -282,7 +323,7 @@ export class DrumSynthesizer {
   }
 
   create808Hihat(): DrumSynth {
-    return this.createDrumSynth(this.create808HihatComponents())
+    return this.createDrumSynthFromComponents(this.create808HihatComponents())
   }
 
   create909Hihat(): DrumSynth {
@@ -301,8 +342,12 @@ export class DrumSynthesizer {
     metalSynth.chain(highpass, compressor, this.gainNode)
 
     return {
-      triggerAttackRelease: (duration: string, time?: string): void => {
-        metalSynth.triggerAttackRelease('C6', duration, time)
+      triggerAttackRelease: (duration: ToneDuration, time?: ToneTime): void => {
+        if (time !== undefined) {
+          metalSynth.triggerAttackRelease('C6', duration, time)
+        } else {
+          metalSynth.triggerAttackRelease('C6', duration)
+        }
       },
       dispose: (): void => {
         metalSynth.dispose()

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test } from '@playwright/test'
 
 test.describe('Octave Calculation Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,7 +10,9 @@ test.describe('Octave Calculation Tests', () => {
 
   test('should have correct octave progression in major scale D key', async ({ page }) => {
     // Change to MAJOR scale
-    const majorButton = page.locator('[data-testid="synth-controls"] button').filter({ hasText: /^MAJOR$/ })
+    const majorButton = page
+      .locator('[data-testid="synth-controls"] button')
+      .filter({ hasText: /^MAJOR$/ })
     await majorButton.click({ force: true })
     await page.waitForTimeout(500)
 
@@ -49,12 +51,16 @@ test.describe('Octave Calculation Tests', () => {
 
   test('should handle chromatic scale octave transitions correctly', async ({ page }) => {
     // Change to CHROMATIC scale (all 12 notes)
-    const chromaticButton = page.locator('[data-testid="synth-controls"] button').filter({ hasText: /^CHROMATIC$/ })
+    const chromaticButton = page
+      .locator('[data-testid="synth-controls"] button')
+      .filter({ hasText: /^CHROMATIC$/ })
     await chromaticButton.click({ force: true })
     await page.waitForTimeout(500)
 
     // Change to F# key (a key that would reveal octave issues)
-    const fsButton = page.locator('[data-testid="synth-controls"] button').filter({ hasText: /^F#$/ })
+    const fsButton = page
+      .locator('[data-testid="synth-controls"] button')
+      .filter({ hasText: /^F#$/ })
     await fsButton.click({ force: true })
     await page.waitForTimeout(500)
 
@@ -82,15 +88,18 @@ test.describe('Octave Calculation Tests', () => {
       console.log(`Testing octave progression in ${key} key`)
 
       // Select the key
-      const keyButton = page.locator('[data-testid="synth-controls"] button').filter({ hasText: new RegExp(`^${key}$`) })
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      const keyButton = page
+        .locator('[data-testid="synth-controls"] button')
+        .filter({ hasText: new RegExp('^' + key + '$') })
       await keyButton.click({ force: true })
       await page.waitForTimeout(300)
 
       // Add a test pattern
       await page.locator('[data-testid="grid-cell-15-0"]').click({ force: true }) // Lowest note
       await page.locator('[data-testid="grid-cell-10-1"]').click({ force: true }) // Middle note
-      await page.locator('[data-testid="grid-cell-5-2"]').click({ force: true })  // Higher note
-      await page.locator('[data-testid="grid-cell-0-3"]').click({ force: true })  // Highest note
+      await page.locator('[data-testid="grid-cell-5-2"]').click({ force: true }) // Higher note
+      await page.locator('[data-testid="grid-cell-0-3"]').click({ force: true }) // Highest note
 
       // Play briefly to test note generation
       await page.locator('[data-testid="play-button"]').click({ force: true })

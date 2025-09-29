@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, max-lines-per-function */
+/* eslint-disable max-lines-per-function */
 import { useSequencer } from '../context/SequencerContextImproved'
 import { SCALES, KEYS } from '../utils/scales'
 
