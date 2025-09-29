@@ -99,16 +99,14 @@ test.describe('Scale and Key Functionality', () => {
       // Select scale
       const scaleButton = page
         .locator('[data-testid="synth-controls"] button')
-        // eslint-disable-next-line security/detect-non-literal-regexp
-        .filter({ hasText: new RegExp('^' + combo.scale + '$') })
+        .filter({ hasText: combo.scale })
       await scaleButton.click({ force: true })
       await page.waitForTimeout(300)
 
-      // Select key
-      // eslint-disable-next-line security/detect-non-literal-regexp
+      // Select key - use getByRole with exact name to avoid matching partial text
       const keyButton = page
-        .locator('[data-testid="synth-controls"] button')
-        .filter({ hasText: new RegExp('^' + combo.key + '$') })
+        .locator('[data-testid="synth-controls"]')
+        .getByRole('button', { name: combo.key, exact: true })
       await keyButton.click({ force: true })
       await page.waitForTimeout(300)
 

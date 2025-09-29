@@ -7,7 +7,10 @@ import DrumControls from './components/DrumControls'
 import EffectsControls from './components/EffectsControls'
 import Visualizer from './components/Visualizer'
 import { SequencerProvider as OldSequencerProvider, useSequencer } from './context/SequencerContext'
-import { SequencerProvider as NewSequencerProvider, useSequencer as useNewSequencer } from './context/SequencerContextImproved'
+import {
+  SequencerProvider as NewSequencerProvider,
+  useSequencer as useNewSequencer,
+} from './context/SequencerContextImproved'
 
 const useSpacebarToggle = (togglePlayback: () => void): void => {
   useEffect((): (() => void) => {
@@ -26,19 +29,19 @@ const useSpacebarToggle = (togglePlayback: () => void): void => {
   }, [togglePlayback])
 }
 
-const OldTimingApp = () => {
+const OldTimingApp = (): React.JSX.Element => {
   const { togglePlayback } = useSequencer()
   useSpacebarToggle(togglePlayback)
   return <AppUI />
 }
 
-const NewTimingApp = () => {
+const NewTimingApp = (): React.JSX.Element => {
   const { togglePlayback } = useNewSequencer()
   useSpacebarToggle(togglePlayback)
   return <AppUI />
 }
 
-const LCARSTopBar = () => (
+const LCARSTopBar = (): React.JSX.Element => (
   <div className="flex gap-2 mb-4">
     <div className="bg-lcars-orange rounded-l-full rounded-r-lg h-16 flex-1 flex items-center px-8">
       <h1 className="text-black text-2xl font-bold tracking-wider">VIBELOOP</h1>
@@ -48,14 +51,14 @@ const LCARSTopBar = () => (
   </div>
 )
 
-const LeftPanel = () => (
+const LeftPanel = (): React.JSX.Element => (
   <div className="flex gap-4 w-auto">
     <EffectsControls />
     <SynthControls />
   </div>
 )
 
-const RightPanel = () => (
+const RightPanel = (): React.JSX.Element => (
   <div className="flex flex-col gap-4 w-auto">
     <PresetButtons />
     <DrumControls />
@@ -63,7 +66,7 @@ const RightPanel = () => (
   </div>
 )
 
-const MainContent = () => (
+const MainContent = (): React.JSX.Element => (
   <div className="flex gap-4">
     <LeftPanel />
     <div className="flex items-center">
@@ -79,7 +82,7 @@ const MainContent = () => (
   </div>
 )
 
-const AppUI = () => (
+const AppUI = (): React.JSX.Element => (
   <div className="min-h-screen bg-black p-4">
     <div className="max-w-none mx-auto px-4">
       <LCARSTopBar />
@@ -97,7 +100,7 @@ const TimingToggle = ({
 }: {
   useImprovedTiming: boolean
   onToggle: () => void
-}) => (
+}): React.JSX.Element => (
   <div className="fixed top-4 right-4 z-50 bg-black/80 backdrop-blur p-2 rounded-lg border border-lcars-blue">
     <button
       onClick={onToggle}
@@ -110,14 +113,12 @@ const TimingToggle = ({
       Timing: {useImprovedTiming ? 'IMPROVED ✓' : 'ORIGINAL'}
     </button>
     <div className="text-xs text-gray-400 mt-1">
-      {useImprovedTiming
-        ? 'Using lookahead scheduling'
-        : 'Using basic scheduling'}
+      {useImprovedTiming ? 'Using lookahead scheduling' : 'Using basic scheduling'}
     </div>
   </div>
 )
 
-function AppWithTimingToggle() {
+function AppWithTimingToggle(): React.JSX.Element {
   const [useImprovedTiming, setUseImprovedTiming] = useState(true)
 
   return (

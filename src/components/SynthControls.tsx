@@ -20,7 +20,7 @@ const SliderControl = ({
 }: {
   config: SliderConfig
   onUpdate: (param: keyof SynthParameters, value: string | number) => void
-}) => (
+}): React.JSX.Element => (
   <div>
     <label className="text-lcars-orange text-sm flex justify-between">
       <span>{config.label}</span>
@@ -53,7 +53,7 @@ const ButtonGrid = ({
   currentValue: string
   onSelect: (value: string) => void
   colorClass?: string
-}) => (
+}): React.JSX.Element => (
   <div>
     <label className={`text-${colorClass} text-sm`}>{label}</label>
     <div className="grid grid-cols-2 gap-2 mt-1">
@@ -136,7 +136,7 @@ const createSliderConfigs = (synthParams: SynthParameters): SliderConfig[] => [
   },
 ]
 
-const SynthControls = () => {
+const SynthControls = (): React.JSX.Element => {
   const {
     synthParams,
     updateSynthParam,

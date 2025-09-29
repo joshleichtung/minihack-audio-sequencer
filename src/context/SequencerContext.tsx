@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
+/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
 import type { Scale, Key } from '../utils/scales'

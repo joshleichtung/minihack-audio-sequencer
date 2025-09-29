@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import App from './App'
 
-function AppWithTimingToggleFixed() {
+function AppWithTimingToggleFixed(): React.JSX.Element {
   const [useImprovedTiming, setUseImprovedTiming] = useState(true)
 
   return (
@@ -19,13 +19,10 @@ function AppWithTimingToggleFixed() {
           Timing: {useImprovedTiming ? 'IMPROVED ✓' : 'ORIGINAL'}
         </button>
         <div className="text-xs text-gray-400 mt-1">
-          {useImprovedTiming
-            ? 'Using lookahead scheduling'
-            : 'Using basic scheduling'}
+          {useImprovedTiming ? 'Using lookahead scheduling' : 'Using basic scheduling'}
         </div>
         <div className="text-xs text-yellow-400 mt-1">
-          Note: Currently showing original timing only.
-          Improved timing implementation in progress.
+          Note: Currently showing original timing only. Improved timing implementation in progress.
         </div>
       </div>
 
