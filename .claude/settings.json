@@ -1,0 +1,169 @@
+{
+  "permissions": {
+    "mode": "default",
+
+    "tools": {
+      "Read": {
+        "rule": "Allow",
+        "paths": ["/Users/josh/projects/vibeloop/**"]
+      },
+
+      "Write": {
+        "rule": "Allow",
+        "paths": [
+          "/Users/josh/projects/vibeloop/src/**",
+          "/Users/josh/projects/vibeloop/claudedocs/**",
+          "/Users/josh/projects/vibeloop/tests/**"
+        ],
+        "deniedPaths": [
+          "/Users/josh/projects/vibeloop/.env*",
+          "/Users/josh/projects/vibeloop/**/*secret*",
+          "/Users/josh/projects/vibeloop/**/*key*",
+          "/Users/josh/projects/vibeloop/package.json",
+          "/Users/josh/projects/vibeloop/package-lock.json",
+          "/Users/josh/projects/vibeloop/tsconfig.json"
+        ]
+      },
+
+      "Edit": {
+        "rule": "Allow",
+        "paths": ["/Users/josh/projects/vibeloop/src/**", "/Users/josh/projects/vibeloop/tests/**"],
+        "deniedPaths": [
+          "/Users/josh/projects/vibeloop/.env*",
+          "/Users/josh/projects/vibeloop/**/*secret*",
+          "/Users/josh/projects/vibeloop/**/*key*"
+        ]
+      },
+
+      "Glob": {
+        "rule": "Allow",
+        "paths": ["/Users/josh/projects/vibeloop/**"]
+      },
+
+      "Grep": {
+        "rule": "Allow",
+        "paths": ["/Users/josh/projects/vibeloop/**"]
+      },
+
+      "Bash": {
+        "rule": "Ask",
+        "allowedCommands": [
+          "npm run lint",
+          "npm run build",
+          "npm run test",
+          "npm run dev",
+          "git status",
+          "git diff",
+          "git log",
+          "git branch",
+          "git add",
+          "git commit",
+          "git push",
+          "git push origin*",
+          "gh repo view*",
+          "gh pr create*",
+          "gh pr list*",
+          "gh pr view*",
+          "gh pr status*",
+          "gh pr checks*",
+          "gh issue list*",
+          "gh issue view*",
+          "gh api repos/*/branches/*/protection*",
+          "gh api repos/*/rules/branches/*"
+        ],
+        "deniedCommands": [
+          "git push --force*",
+          "git push -f*",
+          "git push origin main",
+          "git push origin master",
+          "npm publish",
+          "rm -rf",
+          "sudo*",
+          "chmod*",
+          "chown*"
+        ],
+        "requireApprovalFor": ["*install*", "*uninstall*", "*remove*", "git merge*", "git rebase*", "git reset*"]
+      },
+
+      "Task": {
+        "rule": "Allow",
+        "comment": "Allow agent delegation for complex tasks"
+      },
+
+      "TodoWrite": {
+        "rule": "Allow",
+        "comment": "Allow task tracking without approval"
+      },
+
+      "WebSearch": {
+        "rule": "Allow",
+        "comment": "Allow web search for documentation"
+      },
+
+      "WebFetch": {
+        "rule": "Allow",
+        "comment": "Allow fetching documentation"
+      },
+
+      "SlashCommand": {
+        "rule": "Ask",
+        "comment": "Require approval for slash commands"
+      }
+    },
+
+    "mcpServers": {
+      "serena": {
+        "rule": "Allow",
+        "comment": "Semantic code operations allowed"
+      },
+      "context7": {
+        "rule": "Allow",
+        "comment": "Documentation lookup allowed"
+      },
+      "sequential-thinking": {
+        "rule": "Allow",
+        "comment": "Complex reasoning allowed"
+      },
+      "magic": {
+        "rule": "Allow",
+        "comment": "UI component generation allowed"
+      },
+      "playwright": {
+        "rule": "Allow",
+        "comment": "Browser automation allowed with restrictions",
+        "restrictions": {
+          "allowedHosts": ["localhost", "127.0.0.1"],
+          "maxTimeout": 120000,
+          "logAllUrls": true
+        }
+      }
+    }
+  },
+
+  "hooks": {
+    "beforeBash": {
+      "command": "echo '🔍 Running: $CLAUDE_BASH_COMMAND'",
+      "enabled": true
+    },
+    "beforeGitCommit": {
+      "command": "npm run lint",
+      "enabled": true,
+      "blockOnFailure": true
+    },
+    "beforeGitPush": {
+      "command": "git branch --show-current | grep -qE '^(main|master)$' && echo '❌ Cannot push to main/master branch directly' && exit 1 || echo '✅ Pushing to feature branch'",
+      "enabled": true,
+      "blockOnFailure": true
+    },
+    "afterNpmInstall": {
+      "command": "git diff package.json package-lock.json | tee /tmp/npm-changes.log && echo '⚠️  Review package changes in /tmp/npm-changes.log'",
+      "enabled": true
+    }
+  },
+
+  "safetyLimits": {
+    "maxFilesPerOperation": 50,
+    "maxBashCommandLength": 1000,
+    "requireApprovalForBulkDeletes": true
+  }
+}
