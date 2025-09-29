@@ -24,6 +24,15 @@ Audio.
 
 ### 🛑 MANDATORY LINT ENFORCEMENT
 
+**ABSOLUTE PROHIBITION: NO ESLINT DISABLING**
+
+- **NEVER** use `/* eslint-disable */` or `// eslint-disable-next-line` without
+  explicit approval
+- **NEVER** disable `@typescript-eslint/no-explicit-any` rule
+- **NEVER** use `--no-verify` flag in git commits
+- **NEVER** bypass linting with any workarounds
+- **FIX THE CODE** to meet linting standards instead of disabling rules
+
 **BEFORE ANY CODE CHANGE:**
 
 ```bash
@@ -102,9 +111,11 @@ Types: feat, fix, refactor, perf, docs, test, chore
 ### TypeScript Requirements
 
 - **Strict mode enabled** - no `any` types without justification
+- **NO ESLINT DISABLING** - especially `@typescript-eslint/no-explicit-any`
 - **Explicit interfaces** for all data structures
 - **Proper error handling** with try/catch blocks
 - **Import organization** - group by: React, external libs, internal modules
+- **Replace any types** with proper TypeScript interfaces immediately
 
 ### Audio Development Best Practices
 

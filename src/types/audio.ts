@@ -120,3 +120,40 @@ export interface DrumParameters {
   pattern: string
   selectedKit: string
 }
+
+// Interface for drum synthesizers with proper typing
+export interface ToneDrumSynth {
+  triggerAttackRelease: (note: string | number, duration: ToneDuration, time?: ToneTime) => void
+  dispose?: () => void
+  output?: Tone.ToneAudioNode
+  connect?: (destination: Tone.InputNode) => void
+  disconnect?: () => void
+}
+
+// Record type for drum synthesizers collection
+export type DrumSynthCollection = Record<string, ToneDrumSynth>
+
+// Interface for character patches (partial SynthParameters)
+export interface CharacterPatch {
+  waveform?: string
+  attack?: number
+  release?: number
+  brightness?: number
+  texture?: number
+  volume?: number
+}
+
+// Record type for character patches collection
+export type CharacterPatchCollection = Record<string, CharacterPatch | null>
+
+// Interface for Tone.js synth voice with filter
+export interface ToneSynthVoice {
+  filter?: {
+    frequency: {
+      rampTo: (value: number, time: number) => void
+    }
+    Q: {
+      rampTo: (value: number, time: number) => void
+    }
+  }
+}

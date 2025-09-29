@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, security/detect-object-injection, react-hooks/exhaustive-deps, react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import * as Tone from 'tone'
 import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
@@ -15,6 +15,9 @@ import type {
   ScheduledEvent,
   SynthParameters,
   EffectParameters,
+  DrumSynthCollection,
+  CharacterPatchCollection,
+  ToneSynthVoice,
 } from '../types'
 
 const SequencerContext = createContext<SequencerContextType | undefined>(undefined)
@@ -174,7 +177,7 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
   )
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
-  const drumSynthsRef = useRef<{ [key: string]: any }>({})
+  const drumSynthsRef = useRef<DrumSynthCollection>({})
   const drumSynthesizerRef = useRef<DrumSynthesizer | null>(null)
   const drumGainRef = useRef<Tone.Gain | null>(null)
   const drumEnabledRef = useRef(drumEnabled)
@@ -400,7 +403,7 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
     synthRef.current = new Tone.PolySynth({
       voice: Tone.MonoSynth,
       options: {
-        oscillator: { type: synthParams.waveform as any },
+        oscillator: { type: synthParams.waveform as Tone.ToneOscillatorType },
         envelope: {
           attack: synthParams.attack,
           decay: synthParams.decay,
@@ -482,15 +485,12 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
       if (drumSynth && trackEffects) {
         // Disconnect from master drum gain and connect to individual track
 
-        const anyDrumSynth = drumSynth as any
-        if ('output' in drumSynth && anyDrumSynth.output) {
-          anyDrumSynth.output.disconnect()
-
-          anyDrumSynth.output.connect(trackEffects.gain)
-        } else if ('connect' in drumSynth) {
-          anyDrumSynth.disconnect()
-
-          anyDrumSynth.connect(trackEffects.gain)
+        if ('output' in drumSynth && drumSynth.output) {
+          drumSynth.output.disconnect()
+          drumSynth.output.connect(trackEffects.gain)
+        } else if ('connect' in drumSynth && drumSynth.disconnect && drumSynth.connect) {
+          drumSynth.disconnect()
+          drumSynth.connect(trackEffects.gain)
         }
       }
     })
@@ -565,7 +565,9 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
 
   const disposeDrumSynths = () => {
     // Cleanup drum synths
-    Object.values(drumSynthsRef.current).forEach((synth: any) => {
+    const drumSynths = drumSynthsRef.current
+    Object.keys(drumSynths).forEach(key => {
+      const synth = drumSynths[key]
       if (synth && synth.dispose) {
         synth.dispose()
       }
@@ -736,7 +738,7 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
   }, [])
 
   // Character patch definitions
-  const characterPatches: Record<string, any> = {
+  const characterPatches: CharacterPatchCollection = {
     default: null,
     nebula: {
       waveform: 'sine',
@@ -987,7 +989,7 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
     if (synthRef.current) {
       synthRef.current.set({
         oscillator: {
-          type: synthParams.waveform as any,
+          type: synthParams.waveform as Tone.ToneOscillatorType,
           // Note: detune parameter handled through individual voice access
         },
         envelope: {
@@ -1002,9 +1004,12 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
 
       // Apply filter settings if available
 
-      if ('filter' in (synthRef.current as any).voice) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const voice = (synthRef.current as any).voice as any
+      if (
+        'voice' in synthRef.current &&
+        synthRef.current.voice &&
+        'filter' in synthRef.current.voice
+      ) {
+        const voice = synthRef.current.voice as ToneSynthVoice
         if (voice.filter) {
           voice.filter.frequency.rampTo(synthParams.filterCutoff, 0.1)
           voice.filter.Q.rampTo(synthParams.filterResonance, 0.1)
