@@ -38,5 +38,30 @@ export interface VelocityLevel {
 export const VELOCITY_LEVELS: VelocityLevel[] = [
   { value: 0.3, label: 'QUIET', color: 'bg-lcars-blue' },
   { value: 0.7, label: 'NORMAL', color: 'bg-lcars-orange' },
-  { value: 1.0, label: 'EMPHASIS', color: 'bg-red-500' }
+  { value: 1.0, label: 'EMPHASIS', color: 'bg-red-500' },
 ]
+
+// Pattern save/load types
+export interface SavedPattern {
+  id: string
+  name: string
+  description?: string
+  grid: Cell[][]
+  tempo: number
+  scaleId: string | null
+  keyId: string | null
+  drumEnabled: boolean
+  drumPatternId: string
+  drumKitId: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface PatternMetadata {
+  id: string
+  name: string
+  description?: string
+  tempo: number
+  createdAt: number
+  updatedAt: number
+}

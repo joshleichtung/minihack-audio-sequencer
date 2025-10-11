@@ -5,6 +5,7 @@ import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
 import type { ToneTime } from '../types/audio'
 import { mobileAudioManager } from '../audio/MobileAudioFix'
 import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
+import * as patternStorage from '../utils/patternStorage'
 import type {
   Cell,
   DrumPattern,
@@ -15,6 +16,8 @@ import type {
   ScheduledEvent,
   SynthParameters,
   EffectParameters,
+  SavedPattern,
+  PatternMetadata,
 } from '../types'
 
 import type { DrumSynthCollection, CharacterPatchCollection } from '../types/audio'
@@ -173,6 +176,11 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
   )
   const [currentKey, setCurrentKeyState] = useState<Key | null>(
     KEYS.find(k => k.id === 'c') || KEYS[0]
+  )
+
+  // Pattern save/load state
+  const [savedPatterns, setSavedPatterns] = useState<PatternMetadata[]>(
+    patternStorage.getPatternMetadata()
   )
 
   const synthRef = useRef<Tone.PolySynth | null>(null)
@@ -938,6 +946,76 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
     [trackControls, updateTrackControl]
   )
 
+  // Pattern save/load functions
+  const saveCurrentPattern = useCallback(
+    (name: string, description?: string) => {
+      const patternData: SavedPattern = {
+        id: `pattern_${Date.now()}`,
+        name,
+        description,
+        grid: gridRef.current,
+        tempo,
+        scaleId: currentScale?.id || null,
+        keyId: currentKey?.id || null,
+        drumEnabled,
+        drumPatternId: currentDrumPattern,
+        drumKitId: currentDrumKit,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+
+      patternStorage.savePattern(patternData)
+      setSavedPatterns(patternStorage.getPatternMetadata())
+    },
+    [tempo, currentScale, currentKey, drumEnabled, currentDrumPattern, currentDrumKit]
+  )
+
+  const loadPattern = useCallback(
+    (id: string) => {
+      const pattern = patternStorage.getPattern(id)
+      if (!pattern) return
+
+      // Load grid
+      gridRef.current = pattern.grid
+      setGrid(pattern.grid)
+
+      // Load tempo
+      setTempo(pattern.tempo)
+
+      // Load scale and key
+      if (pattern.scaleId) {
+        setScale(pattern.scaleId)
+      }
+      if (pattern.keyId) {
+        setKey(pattern.keyId)
+      }
+
+      // Load drum settings
+      setDrumEnabled(pattern.drumEnabled)
+      selectDrumPattern(pattern.drumPatternId)
+      selectDrumKit(pattern.drumKitId)
+    },
+    [setScale, setKey, selectDrumPattern, selectDrumKit]
+  )
+
+  const deletePatternCallback = useCallback((id: string) => {
+    patternStorage.deletePattern(id)
+    setSavedPatterns(patternStorage.getPatternMetadata())
+  }, [])
+
+  const exportPatternCallback = useCallback((id: string) => {
+    const pattern = patternStorage.getPattern(id)
+    if (pattern) {
+      patternStorage.exportPattern(pattern)
+    }
+  }, [])
+
+  const importPatternCallback = useCallback(async (file: File) => {
+    const pattern = await patternStorage.importPattern(file)
+    patternStorage.savePattern(pattern)
+    setSavedPatterns(patternStorage.getPatternMetadata())
+  }, [])
+
   // Update synth parameters
   useEffect(() => {
     if (synthRef.current) {
@@ -1015,6 +1093,12 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
         updateTrackControl,
         soloTrack,
         muteTrack,
+        savedPatterns,
+        saveCurrentPattern,
+        loadPattern,
+        deletePattern: deletePatternCallback,
+        exportPattern: exportPatternCallback,
+        importPattern: importPatternCallback,
       }}
     >
       {children}

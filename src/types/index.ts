@@ -6,7 +6,9 @@ export type {
   DrumPattern,
   GridState,
   TransportState,
-  VelocityLevel
+  VelocityLevel,
+  SavedPattern,
+  PatternMetadata,
 } from './sequencer'
 
 export type {
@@ -17,7 +19,7 @@ export type {
   SynthConfig,
   EffectConfig,
   DrumKit,
-  WaveformType
+  WaveformType,
 } from './music'
 
 export type {
@@ -30,7 +32,7 @@ export type {
   ScheduledEvent,
   SynthParameters,
   EffectParameters,
-  DrumParameters
+  DrumParameters,
 } from './audio'
 
 export type {
@@ -43,7 +45,7 @@ export type {
   CellToggleCallback,
   ParameterUpdateCallback,
   SimpleCallback,
-  ValueCallback
+  ValueCallback,
 } from './context'
 
 export type {
@@ -61,7 +63,7 @@ export type {
   DrumToggleButtonProps,
   DrumVolumeControlProps,
   DrumPatternSelectorProps,
-  DrumKitSelectorProps
+  DrumKitSelectorProps,
 } from './components'
 
 export { VELOCITY_LEVELS } from './sequencer'
