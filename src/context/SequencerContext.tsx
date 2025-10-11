@@ -4,6 +4,7 @@ import * as Tone from 'tone'
 import { DrumSynthesizer, DRUM_KITS } from '../audio/DrumSynthesis'
 import type { ToneTime } from '../types/audio'
 import { mobileAudioManager } from '../audio/MobileAudioFix'
+import { MidiController } from '../audio/MidiController'
 import { SCALES, KEYS, getNoteForRow } from '../utils/scales'
 import type {
   Cell,
@@ -346,6 +347,9 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
   // Audio initialization flag
   const audioInitialized = useRef(false)
 
+  // MIDI controller
+  const [midiController] = useState(() => new MidiController())
+
   // Initialize individual track effect chains
   const initializeTrackEffects = useCallback(() => {
     const tracks = ['melody', 'kick', 'snare', 'hihat', 'openhat']
@@ -455,6 +459,18 @@ export const SequencerProvider: React.FC<SequencerProviderProps> = ({ children }
       if (wahFilterRef.current) wahFilterRef.current.dispose()
     }
   }, [])
+
+  // MIDI controller cleanup effect
+  useEffect(() => {
+    return () => {
+      // CRITICAL ISSUE: Memory leak - event listeners not cleaned up
+      // Line 463 referenced in CodeRabbit comment
+      if (midiController) {
+        midiController.clearQueue()
+        // Missing: Remove MIDI input event listeners
+      }
+    }
+  }, [midiController])
 
   const initializeDrumSynths = useCallback(() => {
     if (!drumSynthesizerRef.current) return

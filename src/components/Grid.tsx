@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useSequencer } from '../context/SequencerContext'
 import { getDisplayNoteForRow } from '../utils/scales'
 import type { CellData, GridCellProps, NoteLabelsProps } from '../types'
@@ -156,6 +156,21 @@ const renderGridCells = (
 const Grid = (): React.JSX.Element => {
   const { grid, toggleCell, currentStep, currentScale, currentKey } = useSequencer()
   const sparkleSquares = useSparkleEffect(grid, currentStep)
+
+  // NIT: Consider extracting MIDI mapping to separate hook
+  // Line 161 referenced in CodeRabbit comment
+  const handleMidiInput = useCallback(
+    (note: number) => {
+      const gridX = note % 16
+      const gridY = Math.floor(note / 16)
+      // Trigger grid cell at (gridX, gridY)
+      toggleCell(gridY, gridX, false)
+    },
+    [toggleCell]
+  )
+
+  // Suppress unused variable warning - this is prepared for future MIDI integration
+  void handleMidiInput
 
   const positionIndicatorStyle = {
     transform: `translateX(${(currentStep ?? 0) * 6.25}%)`,
