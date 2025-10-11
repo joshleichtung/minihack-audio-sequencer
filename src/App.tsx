@@ -7,6 +7,7 @@ import DrumControls from './components/DrumControls'
 import EffectsControls from './components/EffectsControls'
 import Visualizer from './components/Visualizer'
 import TrackMixer from './components/TrackMixer'
+import PatternManager from './components/PatternManager'
 import { SequencerProvider, useSequencer } from './context/SequencerContext'
 
 const useSpacebarToggle = (togglePlayback: () => void): void => {
@@ -113,6 +114,7 @@ const AppContent = (): React.JSX.Element => {
     <div className="min-h-screen bg-black p-2 lg:p-3">
       <div className="max-w-none mx-auto px-2 lg:px-3">
         <LCARSTopBar />
+        <PatternManager />
         <MainContent />
         <div className="mt-2 lg:mt-3">
           <Transport />

@@ -9,6 +9,7 @@ import type {
   EffectParameters,
   DrumParameters,
   DrumKitDefinition,
+  PatternMetadata,
 } from './index'
 
 // Track control interface for individual track settings
@@ -80,6 +81,14 @@ export interface SequencerContextType {
   setSwingAmount: (amount: number) => void
   toggleMicroTiming: () => void
   getTimingStats: () => TimingStats
+
+  // Pattern save/load functionality
+  savedPatterns: PatternMetadata[]
+  saveCurrentPattern: (name: string, description?: string) => void
+  loadPattern: (id: string) => void
+  deletePattern: (id: string) => void
+  exportPattern: (id: string) => void
+  importPattern: (file: File) => Promise<void>
 }
 
 export interface SequencerProviderProps {
